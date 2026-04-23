@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-base: #eef3ff;
+  --color-card: #ffffff;
+  --color-muted: #dfe7fb;
+  --color-border: #c2d1f5;
+  --color-text: #0f1b3d;
+  --color-subtle: #516089;
+  --color-accent: #315efb;
+  --color-accent-soft: #d8e2ff;
+  --color-success: #0f9d7a;
+  --color-danger: #d14343;
+  --font-heading: "Space Grotesk";
+  --font-body: "Plus Jakarta Sans";
+  --font-bangla: "Hind Siliguri";
+}
+
+html {
+  background: var(--color-base);
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--color-accent-soft) 90%, transparent) 0, transparent 28%),
+    radial-gradient(circle at 85% 10%, color-mix(in srgb, var(--color-accent) 24%, transparent) 0, transparent 24%),
+    radial-gradient(circle at 50% 95%, color-mix(in srgb, var(--color-success) 18%, transparent) 0, transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-base) 94%, white) 0%, var(--color-base) 100%);
+  color: var(--color-text);
+  font-family: var(--font-body), sans-serif;
+  background-size: 180% 180%, 150% 150%, 160% 160%, cover;
+  animation: backgroundFlow 24s linear infinite;
+}
+
+[data-language="bn"] body {
+  font-family: var(--font-bangla), sans-serif;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--color-card) 90%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.soft-grid {
+  background-image: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--color-border) 70%, transparent) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.brand-gradient {
+  background: linear-gradient(90deg, var(--color-accent), var(--color-success), #f59e0b, var(--color-accent));
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: brandFlow 5.5s linear infinite;
+}
+
+.animated-aurora {
+  background:
+    radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--color-accent) 34%, transparent), transparent 30%),
+    radial-gradient(circle at 80% 30%, color-mix(in srgb, var(--color-success) 28%, transparent), transparent 34%),
+    radial-gradient(circle at 50% 90%, color-mix(in srgb, #f59e0b 28%, transparent), transparent 36%);
+  background-size: 180% 180%;
+  animation: auroraFlow 10s linear infinite;
+}
+
+.wipe-reveal {
+  position: relative;
+  overflow: hidden;
+}
+
+.wipe-reveal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-accent);
+  animation: wipeAcross 1.15s ease-in-out 0.45s forwards;
+}
+
+@keyframes brandFlow {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 260% 50%;
+  }
+}
+
+@keyframes backgroundFlow {
+  0% {
+    background-position: 0% 20%, 100% 0%, 50% 100%, center;
+  }
+  100% {
+    background-position: 180% 120%, -80% 100%, 130% -20%, center;
+  }
+}
+
+@keyframes auroraFlow {
+  0% {
+    background-position: 0% 20%, 100% 0%, 50% 100%;
+  }
+  100% {
+    background-position: 180% 120%, -80% 100%, 130% -20%;
+  }
+}
+
+@keyframes wipeAcross {
+  0% {
+    transform: translateX(-105%);
+  }
+  52% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(105%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  .brand-gradient,
+  .animated-aurora,
+  .wipe-reveal::after {
+    animation: none;
+  }
+}
