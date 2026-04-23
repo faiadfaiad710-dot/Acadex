@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, MoonStar, Languages } from "lucide-react";
+import { Bell, BookOpen, CalendarDays, Home, Languages, Menu, MoonStar, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { THEMES } from "@/lib/constants";
 import { signOutAction } from "@/lib/actions/auth";
@@ -10,11 +10,11 @@ import { useAppConfig } from "@/providers/app-providers";
 import { cn } from "@/lib/utils";
 
 const capsuleLinks = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/teachers", label: "Teacher" },
-  { href: "/subjects", label: "Subject" },
-  { href: "/calendar", label: "Calendar" },
-  { href: "/notices", label: "Notice" }
+  { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/teachers", label: "Teacher", icon: Users },
+  { href: "/subjects", label: "Subject", icon: BookOpen },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/notices", label: "Notice", icon: Bell }
 ];
 
 export function Topbar({
@@ -56,15 +56,17 @@ export function Topbar({
           <nav className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-border bg-card/80 p-1 shadow-sm">
             {capsuleLinks.map((item) => {
               const active = pathname === item.href.split("#")[0];
+              const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition",
+                    "inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition",
                     active ? "bg-accent text-white" : "text-subtle hover:bg-muted hover:text-text"
                   )}
                 >
+                  <Icon className="size-4" />
                   {item.label}
                 </Link>
               );
@@ -107,16 +109,19 @@ export function Topbar({
       <nav className="fixed bottom-4 left-1/2 z-30 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 gap-1 overflow-x-auto rounded-full border border-border bg-card/95 p-1 shadow-card backdrop-blur md:bottom-5 lg:hidden">
         {capsuleLinks.map((item) => {
           const active = pathname === item.href.split("#")[0];
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "whitespace-nowrap rounded-full px-4 py-2 text-xs font-bold transition sm:text-sm",
+                "inline-flex items-center justify-center rounded-full p-3 text-xs font-bold transition sm:p-3.5",
                 active ? "bg-accent text-white" : "text-subtle hover:bg-muted hover:text-text"
               )}
+              aria-label={item.label}
+              title={item.label}
             >
-              {item.label}
+              <Icon className="size-5" />
             </Link>
           );
         })}

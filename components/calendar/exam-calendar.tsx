@@ -27,32 +27,34 @@ export function ExamCalendar({ exams }: { exams: ExamEvent[] }) {
         <p className="text-sm text-subtle">Admin-added exam dates appear inside each day.</p>
       </div>
 
-      <div className="mt-6 grid grid-cols-7 gap-2">
-        {weekDays.map((day) => (
-          <div key={day} className="rounded-2xl bg-muted px-2 py-3 text-center text-xs font-bold uppercase tracking-[0.18em] text-subtle">
-            {day}
-          </div>
-        ))}
-        {leadingBlanks.map((_, index) => (
-          <div key={`blank-${index}`} className="min-h-24 rounded-2xl border border-border/60 bg-muted/30" />
-        ))}
-        {days.map((day) => {
-          const dayExams = exams.filter((exam) => sameDate(new Date(exam.examDate), day));
-          return (
-            <div key={day.toISOString()} className="min-h-28 rounded-2xl border border-border bg-card p-3">
-              <p className="text-sm font-bold text-text">{day.getDate()}</p>
-              <div className="mt-2 space-y-2">
-                {dayExams.map((exam) => (
-                  <div key={exam.id} className="rounded-xl bg-accentSoft px-2 py-2 text-xs text-accent">
-                    <p className="font-bold">{exam.title}</p>
-                    <p>{exam.subjectName}</p>
-                    {exam.startTime ? <p>{exam.startTime}</p> : null}
-                  </div>
-                ))}
-              </div>
+      <div className="mt-6 overflow-x-auto pb-2">
+        <div className="grid min-w-[980px] grid-cols-7 gap-3">
+          {weekDays.map((day) => (
+            <div key={day} className="rounded-2xl bg-muted px-3 py-3 text-center text-xs font-bold uppercase tracking-[0.18em] text-subtle">
+              {day}
             </div>
-          );
-        })}
+          ))}
+          {leadingBlanks.map((_, index) => (
+            <div key={`blank-${index}`} className="min-h-28 rounded-2xl border border-border/60 bg-muted/30" />
+          ))}
+          {days.map((day) => {
+            const dayExams = exams.filter((exam) => sameDate(new Date(exam.examDate), day));
+            return (
+              <div key={day.toISOString()} className="min-h-32 rounded-2xl border border-border bg-card p-3">
+                <p className="text-sm font-bold text-text">{day.getDate()}</p>
+                <div className="mt-2 space-y-2">
+                  {dayExams.map((exam) => (
+                    <div key={exam.id} className="rounded-xl bg-accentSoft px-2 py-2 text-xs text-accent">
+                      <p className="font-bold">{exam.title}</p>
+                      <p>{exam.subjectName}</p>
+                      {exam.startTime ? <p>{exam.startTime}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </Panel>
   );

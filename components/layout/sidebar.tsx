@@ -38,27 +38,34 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const { dictionary } = useAppConfig();
+  const visibleItems =
+    role === "admin"
+      ? navItems
+      : navItems.filter((item) => item.href !== "/admin" && item.href !== "/upload");
 
   return (
-    <aside className={cn("glass-card rounded-[32px] border border-border/70 p-5 shadow-card", className)}>
+    <aside className={cn("glass-card flex h-full flex-col rounded-[32px] border border-border/70 p-5 shadow-card", className)}>
       <div className="mb-8 flex items-start justify-between gap-3">
         <div>
           <p className="brand-gradient font-heading text-4xl font-black tracking-tight">Acadex</p>
           <p className="mt-2 text-sm text-subtle">{role === "admin" ? "Administrator workspace" : "Student workspace"}</p>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-2xl border border-border bg-card p-3 text-text transition hover:border-accent hover:text-accent"
-          aria-label="Close navigation menu"
-        >
-          <X className="size-5" />
-        </button>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-2xl border border-border bg-card p-3 text-text transition hover:border-accent hover:text-accent"
+            aria-label="Close navigation menu"
+          >
+            <X className="size-5" />
+          </button>
+        ) : null}
       </div>
-      <nav className="space-y-2">
-        {navItems
-          .filter((item) => item.roles.includes(role))
-          .map((item) => {
+      <div className="mb-3 rounded-2xl bg-muted/70 px-4 py-3">
+        <p className="text-xs font-black uppercase tracking-[0.25em] text-subtle">Sections</p>
+      </div>
+      <nav className="flex-1 space-y-2 overflow-y-auto pr-1">
+        {visibleItems.map((item) => {
             const Icon = item.icon;
             const active = pathname.startsWith(item.href);
             const label = dictionary[item.labelKey as keyof typeof dictionary] || item.label;

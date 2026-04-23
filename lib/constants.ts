@@ -91,6 +91,21 @@ export const THEMES: Record<
       "--color-success": "#4ad8a7",
       "--color-danger": "#ff7b7b"
     }
+  },
+  liquid: {
+    label: "Liquid Glass",
+    colors: {
+      "--color-base": "#dff3ff",
+      "--color-card": "rgba(255,255,255,0.48)",
+      "--color-muted": "rgba(255,255,255,0.28)",
+      "--color-border": "rgba(255,255,255,0.42)",
+      "--color-text": "#0b2440",
+      "--color-subtle": "#45627e",
+      "--color-accent": "#26a7ff",
+      "--color-accent-soft": "rgba(38,167,255,0.18)",
+      "--color-success": "#17c6a3",
+      "--color-danger": "#ff6f91"
+    }
   }
 };
 

@@ -41,25 +41,24 @@ export default async function DashboardPage() {
 
       <SearchPanel files={files} subjects={subjects} />
 
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <section id="calendar">
-          <ExamCalendar exams={exams} />
-        </section>
-        <Panel>
-          <h3 className="font-heading text-lg font-semibold text-text">Subjects</h3>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {subjects.map((subject) => (
-              <div key={subject.id} className="rounded-2xl border border-border bg-card p-4">
-                <p className="font-medium text-text">{subject.name}</p>
-                <p className="mt-1 text-sm text-subtle">{subject.code}</p>
-                <p className="mt-3 text-xs text-subtle">
-                  {files.filter((file) => file.subjectId === subject.id).length} file(s)
-                </p>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      </div>
+      <section id="calendar">
+        <ExamCalendar exams={exams} />
+      </section>
+
+      <Panel>
+        <h3 className="font-heading text-lg font-semibold text-text">Subjects</h3>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {subjects.map((subject) => (
+            <div key={subject.id} className="rounded-2xl border border-border bg-card p-4">
+              <p className="font-medium text-text">{subject.name}</p>
+              <p className="mt-1 text-sm text-subtle">{subject.code}</p>
+              <p className="mt-3 text-xs text-subtle">
+                {files.filter((file) => file.subjectId === subject.id).length} file(s)
+              </p>
+            </div>
+          ))}
+        </div>
+      </Panel>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel>
