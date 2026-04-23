@@ -7,7 +7,6 @@ export interface UserProfile {
   email: string;
   phone?: string;
   loginId?: string;
-  codeNumber?: string;
   role: UserRole;
   mustChangePassword?: boolean;
   createdAt?: string;

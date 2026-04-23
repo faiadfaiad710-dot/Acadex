@@ -22,9 +22,10 @@ export default async function AdminPage() {
         <BarChart title="Files per subject" data={stats.filesPerSubject} />
         <Panel>
           <h3 className="font-heading text-lg font-semibold text-text">Create user</h3>
-          <p className="mt-2 text-sm text-subtle">Give each admin or student a code number and temporary password. They can set their own password after first login.</p>
+          <p className="mt-2 text-sm text-subtle">Give the student a phone number login and temporary password. Admins can still use email if needed.</p>
           <form action={createUserAction} className="mt-4 space-y-4">
-            <input name="codeNumber" type="text" placeholder="Code number" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
+            <input name="phone" type="tel" placeholder="Student phone number" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
+            <input name="email" type="email" placeholder="Admin email only if creating admin" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
             <input name="password" type="text" placeholder="Temporary password" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
             <select name="role" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent">
               <option value="user">User</option>
@@ -58,7 +59,7 @@ export default async function AdminPage() {
           <div className="mt-4 space-y-3">
             {users.map((user) => (
               <div key={user.uid} className="rounded-2xl border border-border bg-card p-4">
-                <p className="font-medium text-text">{user.codeNumber || user.phone || user.loginId || user.email}</p>
+                <p className="font-medium text-text">{user.phone || user.loginId || user.email}</p>
                 <p className="mt-1 text-xs text-subtle">{user.email}</p>
                 <div className="mt-2 flex items-center justify-between text-xs text-subtle">
                   <span>{user.role}</span>

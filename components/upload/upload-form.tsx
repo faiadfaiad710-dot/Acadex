@@ -2,8 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 interface UploadFormProps {
   subjects: {
@@ -18,10 +16,7 @@ export function UploadForm({ subjects }: UploadFormProps) {
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const handleUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
+  const handleUpload = async (formData: FormData) => {
     const res = await fetch("/api/upload", {
       method: "POST",
       body: formData
@@ -59,20 +54,13 @@ export function UploadForm({ subjects }: UploadFormProps) {
 
         startTransition(async () => {
           try {
-            const uploaded = await handleUpload(file);
+            const uploadData = new FormData();
+            uploadData.append("file", file);
+            uploadData.append("title", title);
+            uploadData.append("subjectId", subjectId);
+            uploadData.append("subjectName", selectedSubject.name);
 
-            await addDoc(collection(db, "files"), {
-              title,
-              fileUrl: uploaded.url,
-              publicId: uploaded.publicId ?? "",
-              resourceType: uploaded.resourceType ?? "",
-              format: uploaded.format ?? "",
-              subjectId,
-              subjectName: selectedSubject.name,
-              uploadDate: new Date().toISOString(),
-              fileType: file.type || "unknown",
-              fileSize: file.size
-            });
+            await handleUpload(uploadData);
 
             setMessage("File uploaded successfully.");
             router.refresh();

@@ -7,7 +7,7 @@ import { MAX_FILE_SIZE, DEFAULT_SUBJECTS } from "@/lib/constants";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import { codeToLoginEmail, normalizeLoginCode } from "@/lib/auth/phone";
+import { normalizePhone, phoneToLoginEmail } from "@/lib/auth/phone";
 
 const subjectSchema = z.object({
   id: z.string().optional(),
@@ -39,7 +39,8 @@ const labSchema = z.object({
 });
 
 const createUserSchema = z.object({
-  codeNumber: z.string().min(4),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().min(5),
   password: z.string().min(6),
   role: z.enum(["admin", "user"])
 });
@@ -66,14 +67,15 @@ export async function createUserAction(formData: FormData) {
   const adminAuth = getAdminAuth();
   const adminDb = getAdminDb();
   const parsed = createUserSchema.parse({
-    codeNumber: formData.get("codeNumber"),
+    email: formData.get("email") || "",
+    phone: formData.get("phone"),
     password: formData.get("password"),
     role: formData.get("role")
   });
-  const codeNumber = normalizeLoginCode(parsed.codeNumber);
-  const loginEmail = codeToLoginEmail(codeNumber);
-  if (!loginEmail || !codeNumber) {
-    throw new Error("A valid code number is required.");
+  const phone = normalizePhone(parsed.phone);
+  const loginEmail = parsed.email || phoneToLoginEmail(phone);
+  if (!loginEmail || !phone) {
+    throw new Error("A valid phone number is required.");
   }
 
   const userRecord = await adminAuth.createUser({
@@ -86,9 +88,8 @@ export async function createUserAction(formData: FormData) {
   await adminDb.collection("users").doc(userRecord.uid).set({
     uid: userRecord.uid,
     email: loginEmail,
-    phone: codeNumber,
-    loginId: codeNumber,
-    codeNumber,
+    phone,
+    loginId: phone,
     role: parsed.role,
     mustChangePassword: true,
     createdAt: new Date().toISOString()

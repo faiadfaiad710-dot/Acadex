@@ -1,18 +1,21 @@
-const PHONE_LOGIN_DOMAIN = "code.academic.local";
+const PHONE_LOGIN_DOMAIN = "phone.academic.local";
 
-export function normalizeLoginCode(value: string) {
+export function normalizePhone(value: string) {
   const trimmed = value.trim();
+  const hasPlus = trimmed.startsWith("+");
   const digits = trimmed.replace(/\D/g, "");
   if (!digits) return "";
-  return digits;
+  return hasPlus ? `+${digits}` : digits;
 }
 
-export function codeToLoginEmail(code: string) {
-  const normalized = normalizeLoginCode(code);
+export function phoneToLoginEmail(phone: string) {
+  const normalized = normalizePhone(phone);
   if (!normalized) return "";
-  return `${normalized}@${PHONE_LOGIN_DOMAIN}`;
+  return `${normalized.replace(/^\+/, "plus")}@${PHONE_LOGIN_DOMAIN}`;
 }
 
 export function credentialToEmail(value: string) {
-  return codeToLoginEmail(value);
+  const trimmed = value.trim();
+  if (trimmed.includes("@")) return trimmed.toLowerCase();
+  return phoneToLoginEmail(trimmed);
 }
