@@ -95,16 +95,16 @@ export const THEMES: Record<
   liquid: {
     label: "Liquid Glass",
     colors: {
-      "--color-base": "#dff3ff",
-      "--color-card": "rgba(255,255,255,0.48)",
-      "--color-muted": "rgba(255,255,255,0.28)",
-      "--color-border": "rgba(255,255,255,0.42)",
-      "--color-text": "#0b2440",
-      "--color-subtle": "#45627e",
-      "--color-accent": "#26a7ff",
-      "--color-accent-soft": "rgba(38,167,255,0.18)",
-      "--color-success": "#17c6a3",
-      "--color-danger": "#ff6f91"
+      "--color-base": "#f4f7fb",
+      "--color-card": "rgba(255,255,255,0.11)",
+      "--color-muted": "rgba(255,255,255,0.07)",
+      "--color-border": "rgba(255,255,255,0.20)",
+      "--color-text": "#122033",
+      "--color-subtle": "#516174",
+      "--color-accent": "#2d87ff",
+      "--color-accent-soft": "rgba(255,255,255,0.08)",
+      "--color-success": "#1dbb9d",
+      "--color-danger": "#f7657d"
     }
   }
 };

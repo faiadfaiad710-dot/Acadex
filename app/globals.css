@@ -46,25 +46,95 @@ body {
 .glass-card {
   background: color-mix(in srgb, var(--color-card) 90%, transparent);
   backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
 }
 
 [data-theme="liquid"] .glass-card {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.16)),
-    color-mix(in srgb, var(--color-card) 92%, transparent);
-  border-color: rgba(255, 255, 255, 0.36);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    color-mix(in srgb, var(--color-card) 68%, transparent);
+  border-color: rgba(255, 255, 255, 0.16);
   box-shadow:
-    0 18px 60px rgba(88, 163, 222, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(22px) saturate(160%);
+    0 16px 44px rgba(55, 79, 109, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(28px) saturate(140%);
+}
+
+[data-theme="liquid"] .glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.24), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.01));
+  pointer-events: none;
 }
 
 [data-theme="liquid"] body {
   background:
-    radial-gradient(circle at 12% 18%, rgba(38, 167, 255, 0.22) 0, transparent 24%),
-    radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.5) 0, transparent 22%),
-    radial-gradient(circle at 50% 100%, rgba(23, 198, 163, 0.18) 0, transparent 28%),
-    linear-gradient(180deg, #edf9ff 0%, #dff3ff 100%);
+    radial-gradient(circle at 12% 18%, rgba(131, 171, 255, 0.1) 0, transparent 24%),
+    radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.36) 0, transparent 22%),
+    radial-gradient(circle at 50% 100%, rgba(29, 187, 157, 0.08) 0, transparent 28%),
+    linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+}
+
+[data-theme="liquid"] .bg-card,
+[data-theme="liquid"] .bg-muted {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)) !important;
+  backdrop-filter: blur(24px) saturate(140%);
+}
+
+[data-theme="liquid"] .border-border {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+[data-theme="liquid"] input,
+[data-theme="liquid"] select,
+[data-theme="liquid"] textarea {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05)) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 10px 24px rgba(70, 88, 112, 0.05);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+
+[data-theme="liquid"] input:focus,
+[data-theme="liquid"] select:focus,
+[data-theme="liquid"] textarea:focus {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 14px 28px rgba(45, 135, 255, 0.08);
+}
+
+[data-theme="liquid"] button,
+[data-theme="liquid"] a.rounded-full,
+[data-theme="liquid"] a.rounded-2xl {
+  backdrop-filter: blur(16px) saturate(145%);
+}
+
+[data-theme="liquid"] .bg-accent {
+  background:
+    linear-gradient(180deg, rgba(79, 146, 255, 0.58), rgba(45, 135, 255, 0.44)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 12px 28px rgba(45, 135, 255, 0.1);
+}
+
+[data-theme="liquid"] .bg-text {
+  background:
+    linear-gradient(180deg, rgba(23, 35, 56, 0.5), rgba(18, 32, 51, 0.38)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 28px rgba(18, 32, 51, 0.1);
 }
 
 .soft-grid {

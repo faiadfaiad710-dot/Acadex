@@ -21,6 +21,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /subjectSections/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /subjectResources/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
     match /files/{docId} {
       allow read: if signedIn();
       allow write: if isAdmin();

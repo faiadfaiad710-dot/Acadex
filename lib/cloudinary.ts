@@ -9,11 +9,11 @@ cloudinary.config({
 export async function uploadToCloudinary(file: File, folder: string) {
   const bytes = Buffer.from(await file.arrayBuffer());
 
-  const upload = await new Promise<{ secure_url: string; original_filename: string }>((resolve, reject) => {
+  const upload = await new Promise<{ secure_url: string; original_filename: string; public_id: string }>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: "auto"
+        resource_type: "raw"
       },
       (error, result) => {
         if (error || !result) {
@@ -23,7 +23,8 @@ export async function uploadToCloudinary(file: File, folder: string) {
 
         resolve({
           secure_url: result.secure_url,
-          original_filename: result.original_filename
+          original_filename: result.original_filename,
+          public_id: result.public_id
         });
       }
     );

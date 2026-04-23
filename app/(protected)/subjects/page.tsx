@@ -1,13 +1,31 @@
-import { deleteSemesterAction, deleteSubjectAction, saveSemesterAction, saveSubjectAction, seedDefaultSubjectsAction } from "@/lib/actions/admin";
+import {
+  deleteSemesterAction,
+  deleteSubjectAction,
+  deleteSubjectResourceAction,
+  deleteSubjectSectionAction,
+  saveSemesterAction,
+  saveSubjectAction,
+  saveSubjectResourceAction,
+  saveSubjectSectionAction,
+  seedDefaultSubjectsAction
+} from "@/lib/actions/admin";
 import { requireUser } from "@/lib/auth/guards";
-import { getAllFiles, getAllSemesters, getAllSubjects } from "@/lib/data";
+import { getAllFiles, getAllSemesters, getAllSubjectResources, getAllSubjectSections, getAllSubjects, getAllTeachers } from "@/lib/data";
 import { getCurrentUser } from "@/lib/auth/session";
 import { Panel } from "@/components/ui/panel";
 import { SemesterFilter } from "@/components/subjects/semester-filter";
 
 export default async function SubjectsPage() {
   await requireUser();
-  const [subjects, files, semesters, currentUser] = await Promise.all([getAllSubjects(), getAllFiles(), getAllSemesters(), getCurrentUser()]);
+  const [subjects, files, semesters, teachers, sections, resources, currentUser] = await Promise.all([
+    getAllSubjects(),
+    getAllFiles(),
+    getAllSemesters(),
+    getAllTeachers(),
+    getAllSubjectSections(),
+    getAllSubjectResources(),
+    getCurrentUser()
+  ]);
   const isAdmin = currentUser?.role === "admin";
 
   return (
@@ -15,7 +33,7 @@ export default async function SubjectsPage() {
       {isAdmin ? (
         <Panel>
           <h2 className="font-heading text-xl font-semibold text-text">Manage semesters and subjects</h2>
-          <p className="mt-2 text-sm text-subtle">Create semesters first, then add subjects under each semester.</p>
+          <p className="mt-2 text-sm text-subtle">Create semesters, then subjects. Each subject comes with Major and Minor sections, and you can add more custom sections anytime.</p>
           <form action={saveSemesterAction} className="mt-6 space-y-4">
             <input name="name" placeholder="Semester name" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
             <button className="w-full rounded-2xl border border-border bg-card px-4 py-3 font-medium text-text transition hover:border-accent">Save semester</button>
@@ -53,7 +71,19 @@ export default async function SubjectsPage() {
       ) : null}
 
       <Panel>
-        <SemesterFilter semesters={semesters} subjects={subjects} files={files} isAdmin={!!isAdmin} />
+        <SemesterFilter
+          semesters={semesters}
+          subjects={subjects}
+          files={files}
+          teachers={teachers}
+          sections={sections}
+          resources={resources}
+          isAdmin={!!isAdmin}
+          saveSubjectSectionAction={saveSubjectSectionAction}
+          saveSubjectResourceAction={saveSubjectResourceAction}
+          deleteSubjectSectionAction={deleteSubjectSectionAction}
+          deleteSubjectResourceAction={deleteSubjectResourceAction}
+        />
         {isAdmin ? <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {subjects.map((subject) => (
             <div key={subject.id} className="rounded-2xl border border-border bg-card p-4">

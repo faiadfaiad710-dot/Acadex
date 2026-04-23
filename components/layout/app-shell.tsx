@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { onAuthStateChanged } from "firebase/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { UserRole } from "@/lib/types";
 import { LoginIntro } from "@/components/layout/login-intro";
 import { BottomCapsuleNav } from "@/components/layout/bottom-capsule-nav";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 
 function getRouteTitle(pathname: string, role: UserRole) {
   if (pathname.startsWith("/admin")) {
@@ -49,7 +51,17 @@ export function AppShell({
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const routeTitle = getRouteTitle(pathname, role);
+
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+    return onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/login");
+      }
+    });
+  }, [router]);
 
   return (
     <div className="min-h-screen px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-8">

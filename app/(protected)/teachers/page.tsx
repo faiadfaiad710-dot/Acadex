@@ -59,11 +59,14 @@ export default async function TeachersPage() {
               </div>
               <p className="mt-3 text-sm text-subtle">{teacher.email || "No email added"}</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                {teacher.subjectIds.map((subjectId) => (
+                {(teacher.subjectIds ?? []).map((subjectId) => (
                   <span key={subjectId} className="rounded-full bg-accentSoft px-3 py-1 text-xs font-medium text-accent">
                     {subjectMap.get(subjectId) ?? "Subject"}
                   </span>
                 ))}
+                {!(teacher.subjectIds ?? []).length ? (
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-subtle">No subject assigned</span>
+                ) : null}
               </div>
             </div>
           ))}

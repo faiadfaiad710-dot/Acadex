@@ -16,6 +16,22 @@ const subjectSchema = z.object({
   semesterId: z.string().optional()
 });
 
+const subjectSectionSchema = z.object({
+  id: z.string().optional(),
+  subjectId: z.string().min(1),
+  name: z.string().min(2),
+  kind: z.enum(["major", "minor", "custom"]),
+  teacherId: z.string().optional()
+});
+
+const subjectResourceSchema = z.object({
+  id: z.string().optional(),
+  subjectId: z.string().min(1),
+  sectionId: z.string().min(1),
+  name: z.string().min(2),
+  type: z.enum(["folder", "file"])
+});
+
 const semesterSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(2)
@@ -73,15 +89,22 @@ export async function createUserAction(formData: FormData) {
     role: formData.get("role")
   });
   const phone = normalizePhone(parsed.phone);
-  const loginEmail = parsed.email || phoneToLoginEmail(phone);
+  const directEmail = String(parsed.email || "").trim().toLowerCase();
+  const loginEmail = directEmail || phoneToLoginEmail(phone);
   if (!loginEmail || !phone) {
     throw new Error("A valid phone number is required.");
   }
 
-  const userRecord = await adminAuth.createUser({
-    email: loginEmail,
-    password: parsed.password
-  });
+  const existingUser = await adminAuth.getUserByEmail(loginEmail).catch(() => null);
+  const userRecord = existingUser
+    ? await adminAuth.updateUser(existingUser.uid, {
+        email: loginEmail,
+        password: parsed.password
+      })
+    : await adminAuth.createUser({
+        email: loginEmail,
+        password: parsed.password
+      });
 
   await adminAuth.setCustomUserClaims(userRecord.uid, { role: parsed.role });
 
@@ -94,6 +117,30 @@ export async function createUserAction(formData: FormData) {
     mustChangePassword: true,
     createdAt: new Date().toISOString()
   });
+
+  revalidatePath("/admin");
+}
+
+export async function deleteUserAction(formData: FormData) {
+  const currentAdmin = await requireAdmin();
+  const adminAuth = getAdminAuth();
+  const adminDb = getAdminDb();
+  const uid = String(formData.get("uid") || "");
+
+  if (!uid) {
+    throw new Error("User id is required.");
+  }
+
+  if (uid === currentAdmin.uid) {
+    throw new Error("You cannot delete your own admin account.");
+  }
+
+  await adminAuth.deleteUser(uid).catch(async (error: { code?: string }) => {
+    if (error?.code !== "auth/user-not-found") {
+      throw error;
+    }
+  });
+  await adminDb.collection("users").doc(uid).delete();
 
   revalidatePath("/admin");
 }
@@ -123,14 +170,41 @@ export async function saveSubjectAction(formData: FormData) {
       },
       { merge: true }
     );
+    const sectionsSnapshot = await adminDb.collection("subjectSections").where("subjectId", "==", parsed.id).get();
+    if (!sectionsSnapshot.empty) {
+      const batch = adminDb.batch();
+      sectionsSnapshot.docs.forEach((doc) => batch.set(doc.ref, { subjectName: parsed.name }, { merge: true }));
+      await batch.commit();
+    }
   } else {
-    await adminDb.collection("subjects").add({
+    const subjectRef = adminDb.collection("subjects").doc();
+    await subjectRef.set({
       name: parsed.name,
       code: parsed.code,
       semesterId: parsed.semesterId ?? "",
       semesterName,
       createdAt: new Date().toISOString()
     });
+    await Promise.all([
+      adminDb.collection("subjectSections").add({
+        subjectId: subjectRef.id,
+        subjectName: parsed.name,
+        name: "Major",
+        kind: "major",
+        teacherId: "",
+        teacherName: "",
+        createdAt: new Date().toISOString()
+      }),
+      adminDb.collection("subjectSections").add({
+        subjectId: subjectRef.id,
+        subjectName: parsed.name,
+        name: "Minor",
+        kind: "minor",
+        teacherId: "",
+        teacherName: "",
+        createdAt: new Date().toISOString()
+      })
+    ]);
   }
 
   revalidatePath("/subjects");
@@ -170,7 +244,15 @@ export async function deleteSubjectAction(formData: FormData) {
   await requireAdmin();
   const adminDb = getAdminDb();
   const id = String(formData.get("id"));
-  await adminDb.collection("subjects").doc(id).delete();
+  const [sectionsSnapshot, resourcesSnapshot] = await Promise.all([
+    adminDb.collection("subjectSections").where("subjectId", "==", id).get(),
+    adminDb.collection("subjectResources").where("subjectId", "==", id).get()
+  ]);
+  const batch = adminDb.batch();
+  batch.delete(adminDb.collection("subjects").doc(id));
+  sectionsSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+  resourcesSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+  await batch.commit();
   revalidatePath("/subjects");
   revalidatePath("/dashboard");
   revalidatePath("/admin");
@@ -272,7 +354,7 @@ export async function deleteNoticeAction(formData: FormData) {
 export async function saveTeacherAction(formData: FormData) {
   await requireAdmin();
   const adminDb = getAdminDb();
-  const subjectIds = formData.getAll("subjectIds").map(String);
+  const subjectIds = Array.from(new Set(formData.getAll("subjectIds").map(String).filter(Boolean)));
   const parsed = teacherSchema.parse({
     id: formData.get("id") || undefined,
     name: formData.get("name"),
@@ -285,18 +367,134 @@ export async function saveTeacherAction(formData: FormData) {
   if (parsed.id) {
     await adminDb.collection("teachers").doc(parsed.id).set(
       {
-        ...parsed
+        name: parsed.name,
+        designation: parsed.designation || "",
+        email: parsed.email || "",
+        phone: parsed.phone || "",
+        subjectIds: parsed.subjectIds
       },
       { merge: true }
     );
   } else {
     await adminDb.collection("teachers").add({
-      ...parsed,
+      name: parsed.name,
+      designation: parsed.designation || "",
+      email: parsed.email || "",
+      phone: parsed.phone || "",
+      subjectIds: parsed.subjectIds,
       createdAt: new Date().toISOString()
     });
   }
 
   revalidatePath("/teachers");
+  revalidatePath("/subjects");
+  revalidatePath("/dashboard");
+}
+
+export async function saveSubjectSectionAction(formData: FormData) {
+  await requireAdmin();
+  const adminDb = getAdminDb();
+  const parsed = subjectSectionSchema.parse({
+    id: formData.get("id") || undefined,
+    subjectId: formData.get("subjectId"),
+    name: formData.get("name"),
+    kind: formData.get("kind"),
+    teacherId: formData.get("teacherId") || undefined
+  });
+
+  const [subjectDoc, teacherDoc] = await Promise.all([
+    adminDb.collection("subjects").doc(parsed.subjectId).get(),
+    parsed.teacherId ? adminDb.collection("teachers").doc(parsed.teacherId).get() : Promise.resolve(null)
+  ]);
+  const subjectName = String(subjectDoc.data()?.name || "");
+  const teacherName = String(teacherDoc?.data()?.name || "");
+
+  const payload = {
+    subjectId: parsed.subjectId,
+    subjectName,
+    name: parsed.name,
+    kind: parsed.kind,
+    teacherId: parsed.teacherId ?? "",
+    teacherName
+  };
+
+  if (parsed.id) {
+    await adminDb.collection("subjectSections").doc(parsed.id).set(payload, { merge: true });
+  } else {
+    await adminDb.collection("subjectSections").add({
+      ...payload,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  revalidatePath("/subjects");
+}
+
+export async function deleteSubjectSectionAction(formData: FormData) {
+  await requireAdmin();
+  const adminDb = getAdminDb();
+  const id = String(formData.get("id"));
+  const resources = await adminDb.collection("subjectResources").where("sectionId", "==", id).get();
+  const batch = adminDb.batch();
+  resources.docs.forEach((doc) => batch.delete(doc.ref));
+  batch.delete(adminDb.collection("subjectSections").doc(id));
+  await batch.commit();
+  revalidatePath("/subjects");
+}
+
+export async function saveSubjectResourceAction(formData: FormData) {
+  await requireAdmin();
+  const adminDb = getAdminDb();
+  const parsed = subjectResourceSchema.parse({
+    id: formData.get("id") || undefined,
+    subjectId: formData.get("subjectId"),
+    sectionId: formData.get("sectionId"),
+    name: formData.get("name"),
+    type: formData.get("type")
+  });
+  const file = formData.get("file") as File | null;
+
+  let fileUrl = "";
+  let publicId = "";
+  let fileType = "";
+
+  if (parsed.type === "file") {
+    validateFile(file);
+    if (!file || file.size === 0) {
+      throw new Error("Please choose a file to upload.");
+    }
+
+    const uploaded = await uploadToCloudinary(file, `academic-files/subjects/${parsed.subjectId}`);
+    fileUrl = uploaded.secure_url;
+    publicId = "public_id" in uploaded ? String((uploaded as { public_id?: string }).public_id || "") : "";
+    fileType = file.type || "unknown";
+  }
+
+  const payload = {
+    subjectId: parsed.subjectId,
+    sectionId: parsed.sectionId,
+    name: parsed.name,
+    type: parsed.type,
+    ...(fileUrl ? { fileUrl, publicId, fileType } : {})
+  };
+
+  if (parsed.id) {
+    await adminDb.collection("subjectResources").doc(parsed.id).set(payload, { merge: true });
+  } else {
+    await adminDb.collection("subjectResources").add({
+      ...payload,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  revalidatePath("/subjects");
+}
+
+export async function deleteSubjectResourceAction(formData: FormData) {
+  await requireAdmin();
+  const adminDb = getAdminDb();
+  const id = String(formData.get("id"));
+  await adminDb.collection("subjectResources").doc(id).delete();
   revalidatePath("/subjects");
 }
 

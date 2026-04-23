@@ -27,6 +27,29 @@ export interface Subject {
   createdAt?: string;
 }
 
+export interface SubjectSection {
+  id: string;
+  subjectId: string;
+  subjectName?: string;
+  name: string;
+  kind: "major" | "minor" | "custom";
+  teacherId?: string;
+  teacherName?: string;
+  createdAt?: string;
+}
+
+export interface SubjectResource {
+  id: string;
+  subjectId: string;
+  sectionId: string;
+  name: string;
+  type: "folder" | "file";
+  fileUrl?: string;
+  fileType?: string;
+  publicId?: string;
+  createdAt?: string;
+}
+
 export interface FileRecord {
   id: string;
   title: string;

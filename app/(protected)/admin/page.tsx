@@ -1,13 +1,13 @@
 import { BarChart } from "@/components/dashboard/bar-chart";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Panel } from "@/components/ui/panel";
-import { createUserAction } from "@/lib/actions/admin";
+import { createUserAction, deleteUserAction } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getAdminStats, getAllUsers } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
 export default async function AdminPage() {
-  await requireAdmin();
+  const currentAdmin = await requireAdmin();
   const [stats, users] = await Promise.all([getAdminStats(), getAllUsers()]);
 
   return (
@@ -22,7 +22,7 @@ export default async function AdminPage() {
         <BarChart title="Files per subject" data={stats.filesPerSubject} />
         <Panel>
           <h3 className="font-heading text-lg font-semibold text-text">Create user</h3>
-          <p className="mt-2 text-sm text-subtle">Give the student a phone number login and temporary password. Admins can still use email if needed.</p>
+          <p className="mt-2 text-sm text-subtle">Create users here so Acadex updates both Firebase Authentication and the Firestore users collection automatically.</p>
           <form action={createUserAction} className="mt-4 space-y-4">
             <input name="phone" type="tel" placeholder="Student phone number" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
             <input name="email" type="email" placeholder="Admin email only if creating admin" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
@@ -65,6 +65,14 @@ export default async function AdminPage() {
                   <span>{user.role}</span>
                   <span>{user.mustChangePassword ? "Needs password reset" : "Active"}</span>
                 </div>
+                {user.uid !== currentAdmin.uid ? (
+                  <form action={deleteUserAction} className="mt-3">
+                    <input type="hidden" name="uid" value={user.uid} />
+                    <button className="text-xs font-medium text-danger">Delete user</button>
+                  </form>
+                ) : (
+                  <p className="mt-3 text-xs font-medium text-subtle">Current admin</p>
+                )}
               </div>
             ))}
           </div>

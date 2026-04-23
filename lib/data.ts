@@ -1,4 +1,16 @@
-import { DashboardStats, ExamEvent, FileRecord, LabRecord, Notice, Semester, Subject, Teacher, UserProfile } from "@/lib/types";
+import {
+  DashboardStats,
+  ExamEvent,
+  FileRecord,
+  LabRecord,
+  Notice,
+  Semester,
+  Subject,
+  SubjectResource,
+  SubjectSection,
+  Teacher,
+  UserProfile
+} from "@/lib/types";
 import { getAdminDb } from "@/lib/firebase/admin";
 
 function serializeFirestoreValue(value: unknown): unknown {
@@ -123,6 +135,37 @@ export async function getAllUsers() {
     return snapshot.docs.map((doc) => doc.data() as UserProfile);
   } catch (error) {
     console.error("Failed to load users", error);
+    return [];
+  }
+}
+
+export async function getAllSubjectSections() {
+  const adminDb = getAdminDb();
+  try {
+    const snapshot = await adminDb.collection("subjectSections").get();
+    return snapshot.docs
+      .map((doc) => normalize<SubjectSection>(doc.id, doc.data()))
+      .sort((a, b) => {
+        if (a.subjectId !== b.subjectId) return a.subjectId.localeCompare(b.subjectId);
+        const order = { major: 0, minor: 1, custom: 2 } as const;
+        if (order[a.kind] !== order[b.kind]) return order[a.kind] - order[b.kind];
+        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      });
+  } catch (error) {
+    console.error("Failed to load subject sections", error);
+    return [];
+  }
+}
+
+export async function getAllSubjectResources() {
+  const adminDb = getAdminDb();
+  try {
+    const snapshot = await adminDb.collection("subjectResources").get();
+    return snapshot.docs
+      .map((doc) => normalize<SubjectResource>(doc.id, doc.data()))
+      .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  } catch (error) {
+    console.error("Failed to load subject resources", error);
     return [];
   }
 }
