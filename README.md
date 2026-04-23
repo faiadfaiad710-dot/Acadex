@@ -1,4 +1,4 @@
-# Academic File Management
+# Acadex
 
 Cloud-first academic file management system built with Next.js App Router, Firebase Authentication, Firestore, Cloudinary uploads, Tailwind CSS, and Framer Motion.
 
@@ -6,10 +6,11 @@ Cloud-first academic file management system built with Next.js App Router, Fireb
 
 - Role-based authentication for `admin` and `user`
 - Admin dashboard with analytics, recent uploads, subject breakdowns, and quick actions
-- User dashboard with live search, notices, weekly class calendar, and subject-based browsing
-- Admin CRUD for subjects, teachers, notices, labs, and academic files
+- User dashboard with live search, notices, monthly exam calendar, and subject-based browsing
+- Admin CRUD for subjects, teachers, notices, labs, exams, and academic files
 - Teacher-to-subject linking managed by admins
 - Five UI themes with dynamic English/Bangla translations
+- Phone-number login with temporary password flow for students
 - Ready for Vercel deployment with server actions only
 
 ## Tech Stack
@@ -49,6 +50,8 @@ For `FIREBASE_PRIVATE_KEY`, keep newline escapes as `\\n` in Vercel.
 ### `users`
 - `uid`
 - `email`
+- `phone`
+- `loginId`
 - `role`
 - `mustChangePassword`
 - `createdAt`
@@ -61,6 +64,9 @@ For `FIREBASE_PRIVATE_KEY`, keep newline escapes as `\\n` in Vercel.
 ### `files`
 - `title`
 - `fileUrl`
+- `publicId`
+- `resourceType`
+- `format`
 - `subjectId`
 - `subjectName`
 - `uploadDate`
@@ -101,8 +107,6 @@ For `FIREBASE_PRIVATE_KEY`, keep newline escapes as `\\n` in Vercel.
 
 ## Default Subjects
 
-The admin can seed these defaults from the Subjects page:
-
 - Computer Application in Pharmacy (`Pharm-2111`)
 - Physiology and Anatomy -2 (`Pharm-2109`)
 - Pharmacognosy -2 (`Pharm-2107`)
@@ -133,52 +137,3 @@ npm run dev
 - Create a Firestore database in production mode
 - Generate a Firebase service account for server actions
 - Add Firestore security rules matching the examples below
-
-## Suggested Firestore Rules
-
-```js
-rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return signedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
-    }
-
-    match /users/{userId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /subjects/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /files/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /notices/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /teachers/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-
-    match /labs/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-  }
-}
-```
