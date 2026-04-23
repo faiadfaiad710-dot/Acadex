@@ -1,4 +1,4 @@
-import { DashboardStats, ExamEvent, FileRecord, LabRecord, Notice, Subject, Teacher, UserProfile } from "@/lib/types";
+import { DashboardStats, ExamEvent, FileRecord, LabRecord, Notice, Semester, Subject, Teacher, UserProfile } from "@/lib/types";
 import { getAdminDb } from "@/lib/firebase/admin";
 
 function serializeFirestoreValue(value: unknown): unknown {
@@ -35,10 +35,28 @@ function normalize<T extends { id?: string }>(id: string, data: Record<string, u
 export async function getAllSubjects() {
   const adminDb = getAdminDb();
   try {
-    const snapshot = await adminDb.collection("subjects").orderBy("name").get();
-    return snapshot.docs.map((doc) => normalize<Subject>(doc.id, doc.data()));
+    const snapshot = await adminDb.collection("subjects").get();
+    return snapshot.docs
+      .map((doc) => normalize<Subject>(doc.id, doc.data()))
+      .sort((a, b) => {
+        const semesterA = (a.semesterName || "").toLowerCase();
+        const semesterB = (b.semesterName || "").toLowerCase();
+        if (semesterA !== semesterB) return semesterA.localeCompare(semesterB);
+        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      });
   } catch (error) {
     console.error("Failed to load subjects", error);
+    return [];
+  }
+}
+
+export async function getAllSemesters() {
+  const adminDb = getAdminDb();
+  try {
+    const snapshot = await adminDb.collection("semesters").orderBy("name").get();
+    return snapshot.docs.map((doc) => normalize<Semester>(doc.id, doc.data()));
+  } catch (error) {
+    console.error("Failed to load semesters", error);
     return [];
   }
 }

@@ -6,6 +6,7 @@ import { BookOpen, CalendarDays, FlaskConical, LayoutDashboard, Megaphone, Shiel
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import { useAppConfig } from "@/providers/app-providers";
+import { SidebarSearch } from "@/components/layout/sidebar-search";
 
 const navItems: Array<{
   href: string;
@@ -64,6 +65,7 @@ export function Sidebar({
       <div className="mb-3 rounded-2xl bg-muted/70 px-4 py-3">
         <p className="text-xs font-black uppercase tracking-[0.25em] text-subtle">Sections</p>
       </div>
+      <SidebarSearch onNavigate={onNavigate} />
       <nav className="flex-1 space-y-2 overflow-y-auto pr-1">
         {visibleItems.map((item) => {
             const Icon = item.icon;

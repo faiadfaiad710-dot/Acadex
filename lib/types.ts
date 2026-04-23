@@ -7,8 +7,15 @@ export interface UserProfile {
   email: string;
   phone?: string;
   loginId?: string;
+  codeNumber?: string;
   role: UserRole;
   mustChangePassword?: boolean;
+  createdAt?: string;
+}
+
+export interface Semester {
+  id: string;
+  name: string;
   createdAt?: string;
 }
 
@@ -16,6 +23,8 @@ export interface Subject {
   id: string;
   name: string;
   code: string;
+  semesterId?: string;
+  semesterName?: string;
   createdAt?: string;
 }
 

@@ -24,14 +24,14 @@ export function LoginForm() {
         event.preventDefault();
         setError("");
         const formData = new FormData(event.currentTarget);
-        const loginId = String(formData.get("loginId"));
+        const loginId = String(formData.get("codeNumber"));
         const password = String(formData.get("password"));
 
         startTransition(async () => {
           try {
             const firebaseAuth = getFirebaseAuth();
             const email = credentialToEmail(loginId);
-            if (!email) throw new Error("Enter a valid phone number or email.");
+            if (!email) throw new Error("Enter a valid code number.");
             const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
             const token = await credential.user.getIdToken(true);
             await signInWithTokenAction(token);
@@ -50,11 +50,11 @@ export function LoginForm() {
       </div>
       <div className="mt-6 space-y-4">
         <div>
-          <label className="mb-2 block text-sm font-medium text-text">Phone number or admin email</label>
+          <label className="mb-2 block text-sm font-medium text-text">Code number</label>
           <input
-            name="loginId"
+            name="codeNumber"
             type="text"
-            placeholder="01XXXXXXXXX or admin@email.com"
+            placeholder="Enter your code number"
             required
             className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none transition focus:border-accent"
           />

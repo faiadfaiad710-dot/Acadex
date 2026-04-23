@@ -7,12 +7,18 @@ import { MAX_FILE_SIZE, DEFAULT_SUBJECTS } from "@/lib/constants";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import { normalizePhone, phoneToLoginEmail } from "@/lib/auth/phone";
+import { codeToLoginEmail, normalizeLoginCode } from "@/lib/auth/phone";
 
 const subjectSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(2),
-  code: z.string().min(2)
+  code: z.string().min(2),
+  semesterId: z.string().optional()
+});
+
+const semesterSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2)
 });
 
 const teacherSchema = z.object({
@@ -33,8 +39,7 @@ const labSchema = z.object({
 });
 
 const createUserSchema = z.object({
-  email: z.string().email().optional().or(z.literal("")),
-  phone: z.string().min(5),
+  codeNumber: z.string().min(4),
   password: z.string().min(6),
   role: z.enum(["admin", "user"])
 });
@@ -61,15 +66,14 @@ export async function createUserAction(formData: FormData) {
   const adminAuth = getAdminAuth();
   const adminDb = getAdminDb();
   const parsed = createUserSchema.parse({
-    email: formData.get("email") || "",
-    phone: formData.get("phone"),
+    codeNumber: formData.get("codeNumber"),
     password: formData.get("password"),
     role: formData.get("role")
   });
-  const phone = normalizePhone(parsed.phone);
-  const loginEmail = parsed.email || phoneToLoginEmail(phone);
-  if (!loginEmail || !phone) {
-    throw new Error("A valid phone number is required.");
+  const codeNumber = normalizeLoginCode(parsed.codeNumber);
+  const loginEmail = codeToLoginEmail(codeNumber);
+  if (!loginEmail || !codeNumber) {
+    throw new Error("A valid code number is required.");
   }
 
   const userRecord = await adminAuth.createUser({
@@ -82,8 +86,9 @@ export async function createUserAction(formData: FormData) {
   await adminDb.collection("users").doc(userRecord.uid).set({
     uid: userRecord.uid,
     email: loginEmail,
-    phone,
-    loginId: phone,
+    phone: codeNumber,
+    loginId: codeNumber,
+    codeNumber,
     role: parsed.role,
     mustChangePassword: true,
     createdAt: new Date().toISOString()
@@ -98,14 +103,22 @@ export async function saveSubjectAction(formData: FormData) {
   const parsed = subjectSchema.parse({
     id: formData.get("id") || undefined,
     name: formData.get("name"),
-    code: formData.get("code")
+    code: formData.get("code"),
+    semesterId: formData.get("semesterId") || undefined
   });
+  let semesterName = "";
+  if (parsed.semesterId) {
+    const semesterDoc = await adminDb.collection("semesters").doc(parsed.semesterId).get();
+    semesterName = String(semesterDoc.data()?.name || "");
+  }
 
   if (parsed.id) {
     await adminDb.collection("subjects").doc(parsed.id).set(
       {
         name: parsed.name,
-        code: parsed.code
+        code: parsed.code,
+        semesterId: parsed.semesterId ?? "",
+        semesterName
       },
       { merge: true }
     );
@@ -113,6 +126,8 @@ export async function saveSubjectAction(formData: FormData) {
     await adminDb.collection("subjects").add({
       name: parsed.name,
       code: parsed.code,
+      semesterId: parsed.semesterId ?? "",
+      semesterName,
       createdAt: new Date().toISOString()
     });
   }
@@ -120,6 +135,34 @@ export async function saveSubjectAction(formData: FormData) {
   revalidatePath("/subjects");
   revalidatePath("/dashboard");
   revalidatePath("/admin");
+}
+
+export async function saveSemesterAction(formData: FormData) {
+  await requireAdmin();
+  const adminDb = getAdminDb();
+  const parsed = semesterSchema.parse({
+    id: formData.get("id") || undefined,
+    name: formData.get("name")
+  });
+
+  if (parsed.id) {
+    await adminDb.collection("semesters").doc(parsed.id).set({ name: parsed.name }, { merge: true });
+  } else {
+    await adminDb.collection("semesters").add({
+      name: parsed.name,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  revalidatePath("/subjects");
+}
+
+export async function deleteSemesterAction(formData: FormData) {
+  await requireAdmin();
+  const adminDb = getAdminDb();
+  const id = String(formData.get("id"));
+  await adminDb.collection("semesters").doc(id).delete();
+  revalidatePath("/subjects");
 }
 
 export async function deleteSubjectAction(formData: FormData) {

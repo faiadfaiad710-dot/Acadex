@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { UserRole } from "@/lib/types";
 import { LoginIntro } from "@/components/layout/login-intro";
+import { BottomCapsuleNav } from "@/components/layout/bottom-capsule-nav";
 
 function getRouteTitle(pathname: string, role: UserRole) {
   if (pathname.startsWith("/admin")) {
@@ -53,6 +54,7 @@ export function AppShell({
   return (
     <div className="min-h-screen px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-8">
       <LoginIntro />
+      <BottomCapsuleNav />
       <div className="mx-auto max-w-7xl">
         <div className="space-y-5">
           <Topbar title={routeTitle.title} subtitle={routeTitle.subtitle} onMenuClick={() => setOpen(true)} />

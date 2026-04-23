@@ -106,26 +106,6 @@ export function Topbar({
           </form>
         </div>
       </div>
-      <nav className="fixed bottom-4 left-1/2 z-30 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 gap-1 overflow-x-auto rounded-full border border-border bg-card/95 p-1 shadow-card backdrop-blur md:bottom-5 lg:hidden">
-        {capsuleLinks.map((item) => {
-          const active = pathname === item.href.split("#")[0];
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "inline-flex items-center justify-center rounded-full p-3 text-xs font-bold transition sm:p-3.5",
-                active ? "bg-accent text-white" : "text-subtle hover:bg-muted hover:text-text"
-              )}
-              aria-label={item.label}
-              title={item.label}
-            >
-              <Icon className="size-5" />
-            </Link>
-          );
-        })}
-      </nav>
     </motion.div>
   );
 }
