@@ -27,6 +27,21 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<ThemeName>("scholar");
 
   useEffect(() => {
+    const root = document.documentElement;
+    const applyPerformanceMode = () => {
+      const deviceMemory =
+        "deviceMemory" in navigator ? Number((navigator as Navigator & { deviceMemory?: number }).deviceMemory || 0) : 0;
+      const hardwareConcurrency = typeof navigator.hardwareConcurrency === "number" ? navigator.hardwareConcurrency : 8;
+      const isLiteDevice = window.innerWidth < 768 || (deviceMemory > 0 && deviceMemory <= 4) || hardwareConcurrency <= 4;
+      root.dataset.performance = isLiteDevice ? "lite" : "full";
+    };
+
+    applyPerformanceMode();
+    window.addEventListener("resize", applyPerformanceMode);
+    return () => window.removeEventListener("resize", applyPerformanceMode);
+  }, []);
+
+  useEffect(() => {
     const storedLanguage = window.localStorage.getItem("afm-language") as Language | null;
     const storedTheme = window.localStorage.getItem("afm-theme") as ThemeName | null;
     if (storedLanguage) setLanguage(storedLanguage);

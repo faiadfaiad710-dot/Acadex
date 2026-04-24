@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { getAllExams, getAllFiles, getAllNotices, getAllSubjects, getAllLabs, getAllTeachers } from "@/lib/data";
+import {
+  getAllExams,
+  getAllFiles,
+  getAllNotices,
+  getAllSubjects,
+  getAllLabs,
+  getAllTeachers,
+  getAllSubjectResources
+} from "@/lib/data";
 import { requireUser } from "@/lib/auth/guards";
 import { SearchPanel } from "@/components/dashboard/search-panel";
 import { ExamCalendar } from "@/components/calendar/exam-calendar";
@@ -9,20 +17,36 @@ import { formatDate, getNoticeDownloadHref, truncate } from "@/lib/utils";
 
 export default async function DashboardPage() {
   await requireUser();
-  const [files, subjects, notices, labs, teachers, exams] = await Promise.all([
+  const [files, subjects, notices, labs, teachers, exams, subjectResources] = await Promise.all([
     getAllFiles(),
     getAllSubjects(),
     getAllNotices(),
     getAllLabs(),
     getAllTeachers(),
-    getAllExams()
+    getAllExams(),
+    getAllSubjectResources()
   ]);
-  const pdfFiles = files.filter((file) => {
-    const type = file.fileType?.toLowerCase() ?? "";
-    const title = file.title.toLowerCase();
-    const url = file.fileUrl.toLowerCase();
-    return type.includes("pdf") || title.endsWith(".pdf") || url.includes(".pdf");
-  });
+
+  function isPdfEntry(entry: {
+    fileType?: string;
+    format?: string;
+    title?: string;
+    name?: string;
+    fileUrl?: string;
+    attachmentName?: string;
+  }) {
+    const type = entry.fileType?.toLowerCase() ?? "";
+    const format = entry.format?.toLowerCase() ?? "";
+    const title = (entry.title || entry.name || entry.attachmentName || "").toLowerCase();
+    const url = (entry.fileUrl || "").toLowerCase();
+    return type.includes("pdf") || format === "pdf" || title.endsWith(".pdf") || url.includes(".pdf");
+  }
+
+  const totalPdfCount =
+    files.filter(isPdfEntry).length +
+    subjectResources.filter((resource) => resource.type === "file" && isPdfEntry(resource)).length +
+    notices.filter(isPdfEntry).length +
+    labs.filter(isPdfEntry).length;
 
   return (
     <div className="space-y-5">
@@ -36,7 +60,7 @@ export default async function DashboardPage() {
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Subjects" value={subjects.length} helper="Available course boxes" />
         <StatCard label="Total classes" value={subjects.length} helper="Classes linked by subject" />
-        <StatCard label="PDF uploaded" value={pdfFiles.length || files.length} helper="Downloadable study files" />
+        <StatCard label="PDF uploaded" value={totalPdfCount} helper="PDF files across the website" />
         <StatCard label="Notices" value={notices.length} helper="Latest academic notices" />
       </div>
 

@@ -10,6 +10,7 @@ export interface UserProfile {
   role: UserRole;
   mustChangePassword?: boolean;
   createdAt?: string;
+  lastSeenAt?: string;
 }
 
 export interface Semester {
@@ -42,8 +43,9 @@ export interface SubjectResource {
   id: string;
   subjectId: string;
   sectionId: string;
+  parentResourceId?: string;
   name: string;
-  type: "folder" | "file";
+  type: "section" | "folder" | "file";
   fileUrl?: string;
   fileType?: string;
   originalName?: string;

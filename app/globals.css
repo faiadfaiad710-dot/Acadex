@@ -275,3 +275,27 @@ body {
     transform: none;
   }
 }
+
+[data-performance="lite"] body,
+[data-performance="lite"] .brand-gradient,
+[data-performance="lite"] .animated-aurora,
+[data-performance="lite"] .wipe-reveal::after,
+[data-performance="lite"] .interactive-lift:hover::after {
+  animation: none !important;
+}
+
+[data-performance="lite"] .glass-card,
+[data-performance="lite"] .bg-card,
+[data-performance="lite"] .bg-muted,
+[data-performance="lite"] input,
+[data-performance="lite"] select,
+[data-performance="lite"] textarea,
+[data-performance="lite"] button {
+  backdrop-filter: none !important;
+}
+
+[data-performance="lite"] .interactive-lift,
+[data-performance="lite"] .interactive-lift:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}

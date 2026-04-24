@@ -49,14 +49,16 @@ export function LoginForm() {
       </div>
       <div className="mt-6 space-y-4">
         <div>
-          <label className="mb-2 block text-sm font-medium text-text">Phone number or admin email</label>
+          <label className="mb-2 block text-sm font-medium text-text">Phone number</label>
           <input
             name="loginId"
             type="text"
-            placeholder="01XXXXXXXXX or admin@email.com"
+            inputMode="numeric"
+            placeholder="01XXXXXXXXX"
             required
             className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none transition focus:border-accent"
           />
+          <p className="mt-2 text-xs text-subtle">Acadex automatically signs in as `your-number@phone.academic.local`.</p>
         </div>
         <div>
           <label className="mb-2 block text-sm font-medium text-text">{dictionary.password}</label>

@@ -6,10 +6,14 @@ import { motion } from "framer-motion";
 export function MouseAura() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [visible, setVisible] = useState(false);
+  const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(pointer: fine)");
-    if (!media.matches) return;
+    const root = document.documentElement;
+    const allow = media.matches && root.dataset.performance !== "lite";
+    setEnabled(allow);
+    if (!allow) return;
 
     const handleMove = (event: MouseEvent) => {
       setPosition({ x: event.clientX, y: event.clientY });
@@ -26,6 +30,8 @@ export function MouseAura() {
       window.removeEventListener("mouseleave", handleLeave);
     };
   }, []);
+
+  if (!enabled) return null;
 
   return (
     <motion.div

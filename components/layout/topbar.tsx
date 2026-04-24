@@ -20,11 +20,13 @@ const capsuleLinks = [
 export function Topbar({
   title,
   subtitle,
-  onMenuClick
+  onMenuClick,
+  unreadNotificationCount
 }: {
   title: string;
   subtitle: string;
   onMenuClick: () => void;
+  unreadNotificationCount: number;
 }) {
   const { dictionary, language, setLanguage, theme, setTheme } = useAppConfig();
   const pathname = usePathname();
@@ -75,6 +77,15 @@ export function Topbar({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+          <Link href="/notices" className="relative flex items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-sm text-text">
+            <Bell className="size-4 text-subtle" />
+            <span>Updates</span>
+            {unreadNotificationCount > 0 ? (
+              <span className="absolute -right-2 -top-2 min-w-5 rounded-full bg-danger px-1.5 py-0.5 text-center text-[11px] font-bold text-white">
+                {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+              </span>
+            ) : null}
+          </Link>
           <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2">
             <Languages className="size-4 text-subtle" />
             <button className={`text-sm ${language === "en" ? "font-bold text-text" : "text-subtle"}`} onClick={() => setLanguage("en")}>

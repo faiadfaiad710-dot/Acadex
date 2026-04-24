@@ -185,3 +185,32 @@ export async function getAdminStats(): Promise<DashboardStats> {
     recentUploads: files.slice(0, 6)
   };
 }
+
+function toMs(value?: string) {
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+export async function getUnreadNotificationCount(lastSeenAt?: string) {
+  const cutoff = toMs(lastSeenAt);
+  const [files, notices, labs, exams, resources] = await Promise.all([
+    getAllFiles(),
+    getAllNotices(),
+    getAllLabs(),
+    getAllExams(),
+    getAllSubjectResources()
+  ]);
+
+  const timestamps = [
+    ...files.map((item) => item.uploadDate),
+    ...notices.map((item) => item.date),
+    ...labs.map((item) => item.date),
+    ...exams.map((item) => item.createdAt || item.examDate),
+    ...resources.map((item) => item.createdAt)
+  ];
+
+  const count = cutoff ? timestamps.filter((value) => toMs(value) > cutoff).length : timestamps.length;
+
+  return count;
+}

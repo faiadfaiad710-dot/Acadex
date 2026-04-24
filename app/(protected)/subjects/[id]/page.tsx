@@ -10,9 +10,22 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAllFiles, getAllSubjectResources, getAllSubjectSections, getAllSubjects, getAllTeachers } from "@/lib/data";
 import { SubjectDetailView } from "@/components/subjects/subject-detail-view";
 
-export default async function SubjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SubjectDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ section?: string; node?: string | string[] }>;
+}) {
   await requireUser();
   const { id } = await params;
+  const resolvedSearchParams = await searchParams;
+  const initialOpenSectionId = String(resolvedSearchParams.section || "");
+  const initialOpenResourceIds = Array.isArray(resolvedSearchParams.node)
+    ? resolvedSearchParams.node.map(String).filter(Boolean)
+    : resolvedSearchParams.node
+      ? [String(resolvedSearchParams.node)]
+      : [];
   const [user, subjects, sections, resources, files, teachers] = await Promise.all([
     getCurrentUser(),
     getAllSubjects(),
@@ -39,6 +52,8 @@ export default async function SubjectDetailPage({ params }: { params: Promise<{ 
         legacyFiles={files.filter((file) => file.subjectId === subject.id).map((file) => ({ id: file.id, title: file.title }))}
         teachers={teachers}
         isAdmin={user?.role === "admin"}
+        initialOpenSectionId={initialOpenSectionId}
+        initialOpenResourceIds={initialOpenResourceIds}
         saveSubjectSectionAction={saveSubjectSectionAction}
         saveSubjectResourceAction={saveSubjectResourceAction}
         deleteSubjectSectionAction={deleteSubjectSectionAction}

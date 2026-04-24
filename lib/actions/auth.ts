@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { clearSession, createSession, getCurrentUser } from "@/lib/auth/session";
 import { normalizePhone } from "@/lib/auth/phone";
@@ -63,4 +64,26 @@ export async function updatePasswordRequirementAction(newPassword: string) {
 
   revalidatePath("/profile");
   return { ok: true, password: newPassword };
+}
+
+export async function markNotificationsSeenAction() {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const adminDb = getAdminDb();
+  await adminDb.collection("users").doc(user.uid).set(
+    {
+      lastSeenAt: FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
+
+  revalidatePath("/dashboard");
+  revalidatePath("/notices");
+  revalidatePath("/subjects");
+  revalidatePath("/calendar");
+  revalidatePath("/teachers");
+  revalidatePath("/labs");
 }

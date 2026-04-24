@@ -22,16 +22,50 @@ export function UploadForm({ subjects }: UploadFormProps) {
       body: formData
     });
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || "Upload failed");
+    const text = await res.text();
+    let data:
+      | {
+          files?: Array<{
+            id: string;
+            url: string;
+            publicId?: string;
+            resourceType?: string;
+            format?: string;
+          }>;
+          count?: number;
+          error?: string;
+        }
+      | null = null;
+
+    try {
+      data = JSON.parse(text) as {
+        files?: Array<{
+          id: string;
+          url: string;
+          publicId?: string;
+          resourceType?: string;
+          format?: string;
+        }>;
+        count?: number;
+        error?: string;
+      };
+    } catch {
+      data = null;
     }
 
-    return data as {
-      url: string;
-      publicId?: string;
-      resourceType?: string;
-      format?: string;
+    if (!res.ok) {
+      throw new Error(data?.error || text || "Upload failed");
+    }
+
+    return (data || {}) as {
+      files?: Array<{
+        id: string;
+        url: string;
+        publicId?: string;
+        resourceType?: string;
+        format?: string;
+      }>;
+      count?: number;
     };
   };
 
@@ -42,27 +76,31 @@ export function UploadForm({ subjects }: UploadFormProps) {
         event.preventDefault();
         setMessage("");
         const formData = new FormData(event.currentTarget);
-        const title = String(formData.get("title") || "");
+        const title = String(formData.get("title") || "").trim();
         const subjectId = String(formData.get("subjectId") || "");
-        const file = formData.get("file") as File | null;
+        const files = formData
+          .getAll("files")
+          .filter((item): item is File => item instanceof File && item.size > 0);
         const selectedSubject = subjects.find((subject) => subject.id === subjectId);
 
-        if (!title || !subjectId || !selectedSubject || !file || file.size === 0) {
-          setMessage("Please fill in all upload fields.");
+        if (!subjectId || !selectedSubject || !files.length) {
+          setMessage("Please choose a subject and at least one file.");
           return;
         }
 
         startTransition(async () => {
           try {
             const uploadData = new FormData();
-            uploadData.append("file", file);
-            uploadData.append("title", title);
             uploadData.append("subjectId", subjectId);
             uploadData.append("subjectName", selectedSubject.name);
+            if (title) {
+              uploadData.append("title", title);
+            }
+            files.forEach((file) => uploadData.append("files", file));
 
-            await handleUpload(uploadData);
+            const result = await handleUpload(uploadData);
 
-            setMessage("File uploaded successfully.");
+            setMessage(`${result.count || files.length} file(s) uploaded successfully.`);
             router.refresh();
             (event.currentTarget as HTMLFormElement).reset();
           } catch (error) {
@@ -73,8 +111,7 @@ export function UploadForm({ subjects }: UploadFormProps) {
     >
       <input
         name="title"
-        placeholder="File title"
-        required
+        placeholder="Optional title prefix"
         className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent"
       />
       <select
@@ -93,8 +130,9 @@ export function UploadForm({ subjects }: UploadFormProps) {
         ))}
       </select>
       <input
-        name="file"
+        name="files"
         type="file"
+        multiple
         required
         className="w-full rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm"
       />

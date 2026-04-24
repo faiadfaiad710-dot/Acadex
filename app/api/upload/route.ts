@@ -32,60 +32,82 @@ export async function POST(req: Request) {
     }
 
     const formData = await req.formData();
-    const file = formData.get("file");
     const title = String(formData.get("title") || "").trim();
     const subjectId = String(formData.get("subjectId") || "").trim();
     const subjectName = String(formData.get("subjectName") || "").trim();
+    const files = formData
+      .getAll("files")
+      .filter((item): item is File => item instanceof File && item.size > 0);
+    const singleFile = formData.get("file");
+    if (!files.length && singleFile instanceof File && singleFile.size > 0) {
+      files.push(singleFile);
+    }
 
-    if (!(file instanceof File)) {
+    if (!files.length) {
       return Response.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (!title || !subjectId || !subjectName) {
+    if (!subjectId || !subjectName) {
       return Response.json({ error: "Missing upload details." }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_SIZE) {
-      return Response.json({ error: "File is too large." }, { status: 400 });
+    const uploadedFiles: Array<{
+      id: string;
+      url: string;
+      publicId?: string;
+      resourceType?: string;
+      format?: string;
+    }> = [];
+
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        return Response.json({ error: `${file.name} is too large.` }, { status: 400 });
+      }
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ resource_type: "raw", folder: "academic-files/files" }, (error, uploadResult) => {
+            if (error || !uploadResult) {
+              reject(error ?? new Error("Upload failed"));
+              return;
+            }
+
+            resolve(uploadResult);
+          })
+          .end(buffer);
+      });
+
+      const finalTitle = title ? `${title} - ${file.name}` : file.name;
+      const saved = await adminDb.collection("files").add({
+        title: finalTitle,
+        originalName: file.name || finalTitle,
+        fileUrl: result.secure_url,
+        publicId: result.public_id,
+        resourceType: result.resource_type,
+        format: result.format ?? "",
+        subjectId,
+        subjectName,
+        uploadDate: new Date().toISOString(),
+        uploadedBy: decoded.uid,
+        fileType: file.type || "unknown",
+        fileSize: file.size
+      });
+
+      uploadedFiles.push({
+        id: saved.id,
+        url: result.secure_url,
+        publicId: result.public_id,
+        resourceType: result.resource_type,
+        format: result.format
+      });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream({ resource_type: "raw", folder: "academic-files/files" }, (error, uploadResult) => {
-          if (error || !uploadResult) {
-            reject(error ?? new Error("Upload failed"));
-            return;
-          }
-
-          resolve(uploadResult);
-        })
-        .end(buffer);
-    });
-
-    const saved = await adminDb.collection("files").add({
-      title,
-      originalName: file.name || title,
-      fileUrl: result.secure_url,
-      publicId: result.public_id,
-      resourceType: result.resource_type,
-      format: result.format ?? "",
-      subjectId,
-      subjectName,
-      uploadDate: new Date().toISOString(),
-      uploadedBy: decoded.uid,
-      fileType: file.type || "unknown",
-      fileSize: file.size
-    });
-
     return Response.json({
-      id: saved.id,
-      url: result.secure_url,
-      publicId: result.public_id,
-      resourceType: result.resource_type,
-      format: result.format
+      count: uploadedFiles.length,
+      files: uploadedFiles
     });
   } catch (error) {
     console.error("Upload failed", error);

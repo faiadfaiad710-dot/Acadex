@@ -28,8 +28,9 @@ const subjectResourceSchema = z.object({
   id: z.string().optional(),
   subjectId: z.string().min(1),
   sectionId: z.string().min(1),
+  parentResourceId: z.string().optional(),
   name: z.string().min(2),
-  type: z.enum(["folder", "file"])
+  type: z.enum(["section", "folder", "file"])
 });
 
 const semesterSchema = z.object({
@@ -77,6 +78,74 @@ function validateFile(file: File | null | undefined) {
   if (file.size > MAX_FILE_SIZE) {
     throw new Error("File is too large. Maximum size is 25MB.");
   }
+}
+
+type SubjectResourceDoc = {
+  id: string;
+  name: string;
+  parentResourceId?: string;
+  type?: string;
+};
+
+async function ensureSubjectResourceFolderChain({
+  adminDb,
+  subjectId,
+  sectionId,
+  baseParentId,
+  segments,
+  resources
+}: {
+  adminDb: ReturnType<typeof getAdminDb>;
+  subjectId: string;
+  sectionId: string;
+  baseParentId?: string;
+  segments: string[];
+  resources: Array<SubjectResourceDoc & Record<string, unknown>>;
+}) {
+  if (!segments.length) {
+    return baseParentId ?? "";
+  }
+
+  let currentParentId = baseParentId ?? "";
+
+  for (const rawSegment of segments) {
+    const segment = rawSegment.trim();
+    if (!segment) continue;
+
+    const existing = resources.find((resource) => {
+      return (
+        String(resource.parentResourceId || "") === currentParentId &&
+        String(resource.type || "") === "folder" &&
+        String(resource.name || "").trim().toLowerCase() === segment.toLowerCase()
+      );
+    });
+
+    if (existing) {
+      currentParentId = existing.id;
+      continue;
+    }
+
+    const ref = await adminDb.collection("subjectResources").add({
+      subjectId,
+      sectionId,
+      parentResourceId: currentParentId,
+      name: segment,
+      type: "folder",
+      createdAt: new Date().toISOString()
+    });
+
+    resources.push({
+      id: ref.id,
+      subjectId,
+      sectionId,
+      parentResourceId: currentParentId,
+      name: segment,
+      type: "folder"
+    });
+    currentParentId = ref.id;
+  }
+
+  return currentParentId;
 }
 
 export async function createUserAction(formData: FormData) {
@@ -464,48 +533,82 @@ export async function saveSubjectResourceAction(formData: FormData) {
     id: formData.get("id") || undefined,
     subjectId: formData.get("subjectId"),
     sectionId: formData.get("sectionId"),
+    parentResourceId: formData.get("parentResourceId") || undefined,
     name: formData.get("name"),
     type: formData.get("type")
   });
-  const file = formData.get("file") as File | null;
-
-  let fileUrl = "";
-  let publicId = "";
-  let fileType = "";
-  let originalName = "";
-  let format = "";
-  let resourceType = "";
-
-  if (parsed.type === "file") {
-    validateFile(file);
-    if (!file || file.size === 0) {
-      throw new Error("Please choose a file to upload.");
-    }
-
-    const uploaded = await uploadToCloudinary(file, `academic-files/subjects/${parsed.subjectId}`);
-    fileUrl = uploaded.secure_url;
-    publicId = "public_id" in uploaded ? String((uploaded as { public_id?: string }).public_id || "") : "";
-    fileType = file.type || "unknown";
-    originalName = file.name || parsed.name;
-    format = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() || "" : "";
-    resourceType = "raw";
+  const files = formData
+    .getAll("files")
+    .filter((item): item is File => item instanceof File && item.size > 0);
+  const singleFile = formData.get("file");
+  if (!files.length && singleFile instanceof File && singleFile.size > 0) {
+    files.push(singleFile);
   }
 
-  const payload = {
-    subjectId: parsed.subjectId,
-    sectionId: parsed.sectionId,
-    name: parsed.name,
-    type: parsed.type,
-    ...(fileUrl ? { fileUrl, publicId, fileType, originalName, format, resourceType } : {})
-  };
+  if (parsed.type === "file") {
+    if (!files.length) {
+      throw new Error("Please choose file(s) to upload.");
+    }
 
-  if (parsed.id) {
-    await adminDb.collection("subjectResources").doc(parsed.id).set(payload, { merge: true });
+    const existingSnapshot = await adminDb
+      .collection("subjectResources")
+      .where("subjectId", "==", parsed.subjectId)
+      .where("sectionId", "==", parsed.sectionId)
+      .get();
+    const existingResources = existingSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Record<string, unknown>)
+    })) as Array<SubjectResourceDoc & Record<string, unknown>>;
+
+    for (const file of files) {
+      validateFile(file);
+      const relativePath = String((file as File & { webkitRelativePath?: string }).webkitRelativePath || "");
+      const relativeSegments = relativePath
+        .split("/")
+        .map((segment) => segment.trim())
+        .filter(Boolean);
+      const nestedFolderSegments = relativeSegments.slice(0, -1);
+      const finalParentId = await ensureSubjectResourceFolderChain({
+        adminDb,
+        subjectId: parsed.subjectId,
+        sectionId: parsed.sectionId,
+        baseParentId: parsed.parentResourceId,
+        segments: nestedFolderSegments,
+        resources: existingResources
+      });
+      const uploaded = await uploadToCloudinary(file, `academic-files/subjects/${parsed.subjectId}`);
+      await adminDb.collection("subjectResources").add({
+        subjectId: parsed.subjectId,
+        sectionId: parsed.sectionId,
+        parentResourceId: finalParentId,
+        name: file.name || parsed.name,
+        type: "file",
+        fileUrl: uploaded.secure_url,
+        publicId: "public_id" in uploaded ? String((uploaded as { public_id?: string }).public_id || "") : "",
+        fileType: file.type || "unknown",
+        originalName: file.name || parsed.name,
+        format: file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() || "" : "",
+        resourceType: "raw",
+        createdAt: new Date().toISOString()
+      });
+    }
   } else {
-    await adminDb.collection("subjectResources").add({
-      ...payload,
-      createdAt: new Date().toISOString()
-    });
+    const payload = {
+      subjectId: parsed.subjectId,
+      sectionId: parsed.sectionId,
+      parentResourceId: parsed.parentResourceId ?? "",
+      name: parsed.name,
+      type: parsed.type
+    };
+
+    if (parsed.id) {
+      await adminDb.collection("subjectResources").doc(parsed.id).set(payload, { merge: true });
+    } else {
+      await adminDb.collection("subjectResources").add({
+        ...payload,
+        createdAt: new Date().toISOString()
+      });
+    }
   }
 
   revalidatePath("/subjects");
@@ -515,7 +618,38 @@ export async function deleteSubjectResourceAction(formData: FormData) {
   await requireAdmin();
   const adminDb = getAdminDb();
   const id = String(formData.get("id"));
-  await adminDb.collection("subjectResources").doc(id).delete();
+  const resourceDoc = await adminDb.collection("subjectResources").doc(id).get();
+  if (!resourceDoc.exists) {
+    revalidatePath("/subjects");
+    return;
+  }
+
+  const subjectId = String(resourceDoc.data()?.subjectId || "");
+  const allResources = subjectId
+    ? await adminDb.collection("subjectResources").where("subjectId", "==", subjectId).get()
+    : await adminDb.collection("subjectResources").get();
+  const docs = allResources.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
+  const idsToDelete = new Set<string>([id]);
+
+  let expanded = true;
+  while (expanded) {
+    expanded = false;
+    for (const doc of docs) {
+      const parentId = String(doc.data.parentResourceId || "");
+      if (parentId && idsToDelete.has(parentId) && !idsToDelete.has(doc.id)) {
+        idsToDelete.add(doc.id);
+        expanded = true;
+      }
+    }
+  }
+
+  const batch = adminDb.batch();
+  docs.forEach((doc) => {
+    if (idsToDelete.has(doc.id)) {
+      batch.delete(adminDb.collection("subjectResources").doc(doc.id));
+    }
+  });
+  await batch.commit();
   revalidatePath("/subjects");
 }
 
@@ -596,9 +730,9 @@ export async function updateMustChangeFlagAction(uid: string, mustChangePassword
 }
 
 export async function touchUserAction(uid: string) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const adminDb = getAdminDb();
-  await adminDb.collection("users").doc(uid).set(
+  await adminDb.collection("users").doc(uid || admin.uid).set(
     {
       lastSeenAt: FieldValue.serverTimestamp()
     },

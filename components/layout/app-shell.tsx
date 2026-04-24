@@ -11,6 +11,7 @@ import { LoginIntro } from "@/components/layout/login-intro";
 import { BottomCapsuleNav } from "@/components/layout/bottom-capsule-nav";
 import { MouseAura } from "@/components/layout/mouse-aura";
 import { getFirebaseAuth } from "@/lib/firebase/client";
+import { markNotificationsSeenAction } from "@/lib/actions/auth";
 
 function getRouteTitle(pathname: string, role: UserRole) {
   if (pathname.startsWith("/admin")) {
@@ -45,12 +46,15 @@ function getRouteTitle(pathname: string, role: UserRole) {
 
 export function AppShell({
   role,
+  unreadNotificationCount,
   children
 }: {
   role: UserRole;
+  unreadNotificationCount: number;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(unreadNotificationCount);
   const pathname = usePathname();
   const router = useRouter();
   const routeTitle = getRouteTitle(pathname, role);
@@ -64,6 +68,18 @@ export function AppShell({
     });
   }, [router]);
 
+  useEffect(() => {
+    setNotificationCount(unreadNotificationCount);
+  }, [unreadNotificationCount]);
+
+  useEffect(() => {
+    if (notificationCount <= 0) return;
+    const timer = window.setTimeout(() => {
+      markNotificationsSeenAction().then(() => setNotificationCount(0)).catch(() => undefined);
+    }, 1800);
+    return () => window.clearTimeout(timer);
+  }, [notificationCount]);
+
   return (
     <div className="min-h-screen px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-8">
       <MouseAura />
@@ -71,7 +87,12 @@ export function AppShell({
       <BottomCapsuleNav />
       <div className="mx-auto max-w-7xl">
         <div className="space-y-5">
-          <Topbar title={routeTitle.title} subtitle={routeTitle.subtitle} onMenuClick={() => setOpen(true)} />
+          <Topbar
+            title={routeTitle.title}
+            subtitle={routeTitle.subtitle}
+            onMenuClick={() => setOpen(true)}
+            unreadNotificationCount={notificationCount}
+          />
           {children}
         </div>
       </div>
