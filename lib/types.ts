@@ -46,6 +46,9 @@ export interface SubjectResource {
   type: "folder" | "file";
   fileUrl?: string;
   fileType?: string;
+  originalName?: string;
+  format?: string;
+  resourceType?: string;
   publicId?: string;
   createdAt?: string;
 }
@@ -54,6 +57,7 @@ export interface FileRecord {
   id: string;
   title: string;
   fileUrl: string;
+  originalName?: string;
   publicId?: string;
   resourceType?: string;
   format?: string;
@@ -70,6 +74,10 @@ export interface Notice {
   text: string;
   fileUrl?: string;
   attachmentName?: string;
+  fileType?: string;
+  format?: string;
+  resourceType?: string;
+  publicId?: string;
   date: string;
 }
 
@@ -95,9 +103,10 @@ export interface LabRecord {
 
 export interface ExamEvent {
   id: string;
+  kind?: "exam" | "event";
   title: string;
-  subjectId: string;
-  subjectName: string;
+  subjectId?: string;
+  subjectName?: string;
   examDate: string;
   startTime?: string;
   room?: string;

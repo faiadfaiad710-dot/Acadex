@@ -59,6 +59,26 @@ export function getFileOpenHref(id: string) {
   return `/api/files/open?id=${encodeURIComponent(id)}`;
 }
 
+export function getFileViewerHref(id: string) {
+  return `/viewer?type=file&id=${encodeURIComponent(id)}`;
+}
+
 export function getFileDownloadHref(id: string) {
   return `/api/files/download?id=${encodeURIComponent(id)}`;
+}
+
+export function getSubjectResourceViewerHref(id: string) {
+  return `/viewer?type=resource&id=${encodeURIComponent(id)}`;
+}
+
+export function getSubjectResourceDownloadHref(id: string) {
+  return `/api/subject-resources/download?id=${encodeURIComponent(id)}`;
+}
+
+export function getNoticeViewerHref(id: string) {
+  return `/viewer?type=notice&id=${encodeURIComponent(id)}`;
+}
+
+export function getNoticeDownloadHref(id: string) {
+  return `/api/notices/download?id=${encodeURIComponent(id)}`;
 }

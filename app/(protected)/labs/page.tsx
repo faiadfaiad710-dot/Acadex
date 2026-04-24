@@ -52,7 +52,7 @@ export default async function LabsPage() {
                       <a href={lab.fileUrl} target="_blank" rel="noreferrer" className="text-accent">
                         Open
                       </a>
-                      <a href={getDownloadUrl(lab.fileUrl)} download className="text-accent">
+                      <a href={getDownloadUrl(lab.fileUrl)} target="_blank" rel="noreferrer" download className="text-accent">
                         Download
                       </a>
                     </div>

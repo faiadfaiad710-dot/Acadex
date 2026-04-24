@@ -67,6 +67,7 @@ export async function POST(req: Request) {
 
     const saved = await adminDb.collection("files").add({
       title,
+      originalName: file.name || title,
       fileUrl: result.secure_url,
       publicId: result.public_id,
       resourceType: result.resource_type,

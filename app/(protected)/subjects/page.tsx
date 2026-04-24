@@ -1,35 +1,27 @@
 import {
   deleteSemesterAction,
   deleteSubjectAction,
-  deleteSubjectResourceAction,
-  deleteSubjectSectionAction,
   saveSemesterAction,
   saveSubjectAction,
-  saveSubjectResourceAction,
-  saveSubjectSectionAction,
   seedDefaultSubjectsAction
 } from "@/lib/actions/admin";
 import { requireUser } from "@/lib/auth/guards";
-import { getAllFiles, getAllSemesters, getAllSubjectResources, getAllSubjectSections, getAllSubjects, getAllTeachers } from "@/lib/data";
+import { getAllSemesters, getAllSubjects } from "@/lib/data";
 import { getCurrentUser } from "@/lib/auth/session";
 import { Panel } from "@/components/ui/panel";
 import { SemesterFilter } from "@/components/subjects/semester-filter";
 
 export default async function SubjectsPage() {
   await requireUser();
-  const [subjects, files, semesters, teachers, sections, resources, currentUser] = await Promise.all([
+  const [subjects, semesters, currentUser] = await Promise.all([
     getAllSubjects(),
-    getAllFiles(),
     getAllSemesters(),
-    getAllTeachers(),
-    getAllSubjectSections(),
-    getAllSubjectResources(),
     getCurrentUser()
   ]);
   const isAdmin = currentUser?.role === "admin";
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[420px_1fr]">
+    <div className="space-y-5">
       {isAdmin ? (
         <Panel>
           <h2 className="font-heading text-xl font-semibold text-text">Manage semesters and subjects</h2>
@@ -71,19 +63,7 @@ export default async function SubjectsPage() {
       ) : null}
 
       <Panel>
-        <SemesterFilter
-          semesters={semesters}
-          subjects={subjects}
-          files={files}
-          teachers={teachers}
-          sections={sections}
-          resources={resources}
-          isAdmin={!!isAdmin}
-          saveSubjectSectionAction={saveSubjectSectionAction}
-          saveSubjectResourceAction={saveSubjectResourceAction}
-          deleteSubjectSectionAction={deleteSubjectSectionAction}
-          deleteSubjectResourceAction={deleteSubjectResourceAction}
-        />
+        <SemesterFilter semesters={semesters} subjects={subjects} />
         {isAdmin ? <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {subjects.map((subject) => (
             <div key={subject.id} className="rounded-2xl border border-border bg-card p-4">

@@ -63,8 +63,9 @@ const createUserSchema = z.object({
 
 const examSchema = z.object({
   id: z.string().optional(),
+  kind: z.enum(["exam", "event"]).default("exam"),
   title: z.string().min(2),
-  subjectId: z.string().min(1),
+  subjectId: z.string().optional(),
   examDate: z.string().min(1),
   startTime: z.string().optional(),
   room: z.string().optional(),
@@ -316,24 +317,38 @@ export async function uploadAcademicFileAction(formData: FormData) {
 export async function saveNoticeAction(formData: FormData) {
   await requireAdmin();
   const adminDb = getAdminDb();
-  const text = String(formData.get("text") || "");
+  const text = String(formData.get("text") || "").trim();
   const file = formData.get("file") as File | null;
 
-  if (!text) throw new Error("Notice text is required");
+  if (!text && (!file || file.size === 0)) {
+    throw new Error("Add notice text or upload a file.");
+  }
   validateFile(file);
 
   let fileUrl = "";
   let attachmentName = "";
+  let fileType = "";
+  let format = "";
+  let resourceType = "";
+  let publicId = "";
   if (file && file.size > 0) {
     const uploaded = await uploadToCloudinary(file, "academic-files/notices");
     fileUrl = uploaded.secure_url;
-    attachmentName = uploaded.original_filename;
+    attachmentName = file.name || uploaded.original_filename;
+    fileType = file.type || "unknown";
+    format = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() || "" : "";
+    resourceType = "raw";
+    publicId = uploaded.public_id;
   }
 
   await adminDb.collection("notices").add({
     text,
     fileUrl,
     attachmentName,
+    fileType,
+    format,
+    resourceType,
+    publicId,
     date: new Date().toISOString()
   });
 
@@ -457,6 +472,9 @@ export async function saveSubjectResourceAction(formData: FormData) {
   let fileUrl = "";
   let publicId = "";
   let fileType = "";
+  let originalName = "";
+  let format = "";
+  let resourceType = "";
 
   if (parsed.type === "file") {
     validateFile(file);
@@ -468,6 +486,9 @@ export async function saveSubjectResourceAction(formData: FormData) {
     fileUrl = uploaded.secure_url;
     publicId = "public_id" in uploaded ? String((uploaded as { public_id?: string }).public_id || "") : "";
     fileType = file.type || "unknown";
+    originalName = file.name || parsed.name;
+    format = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() || "" : "";
+    resourceType = "raw";
   }
 
   const payload = {
@@ -475,7 +496,7 @@ export async function saveSubjectResourceAction(formData: FormData) {
     sectionId: parsed.sectionId,
     name: parsed.name,
     type: parsed.type,
-    ...(fileUrl ? { fileUrl, publicId, fileType } : {})
+    ...(fileUrl ? { fileUrl, publicId, fileType, originalName, format, resourceType } : {})
   };
 
   if (parsed.id) {
@@ -590,21 +611,26 @@ export async function saveExamAction(formData: FormData) {
   const adminDb = getAdminDb();
   const parsed = examSchema.parse({
     id: formData.get("id") || undefined,
+    kind: formData.get("kind") || "exam",
     title: formData.get("title"),
-    subjectId: formData.get("subjectId"),
+    subjectId: formData.get("subjectId") || "",
     examDate: formData.get("examDate"),
     startTime: formData.get("startTime") || "",
     room: formData.get("room") || "",
     note: formData.get("note") || ""
   });
 
-  const subjectDoc = await adminDb.collection("subjects").doc(parsed.subjectId).get();
-  const subjectName = String(subjectDoc.data()?.name || "");
-  if (!subjectName) throw new Error("Invalid subject");
+  let subjectName = "General Event";
+  if (parsed.kind === "exam") {
+    const subjectDoc = await adminDb.collection("subjects").doc(parsed.subjectId || "").get();
+    subjectName = String(subjectDoc.data()?.name || "");
+    if (!subjectName) throw new Error("Invalid subject");
+  }
 
   const payload = {
+    kind: parsed.kind,
     title: parsed.title,
-    subjectId: parsed.subjectId,
+    subjectId: parsed.subjectId ?? "",
     subjectName,
     examDate: parsed.examDate,
     startTime: parsed.startTime ?? "",

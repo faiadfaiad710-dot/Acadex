@@ -9,6 +9,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { UserRole } from "@/lib/types";
 import { LoginIntro } from "@/components/layout/login-intro";
 import { BottomCapsuleNav } from "@/components/layout/bottom-capsule-nav";
+import { MouseAura } from "@/components/layout/mouse-aura";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 
 function getRouteTitle(pathname: string, role: UserRole) {
@@ -65,6 +66,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-8">
+      <MouseAura />
       <LoginIntro />
       <BottomCapsuleNav />
       <div className="mx-auto max-w-7xl">

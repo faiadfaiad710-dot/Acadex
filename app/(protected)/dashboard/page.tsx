@@ -1,10 +1,11 @@
+import Link from "next/link";
 import { getAllExams, getAllFiles, getAllNotices, getAllSubjects, getAllLabs, getAllTeachers } from "@/lib/data";
 import { requireUser } from "@/lib/auth/guards";
 import { SearchPanel } from "@/components/dashboard/search-panel";
 import { ExamCalendar } from "@/components/calendar/exam-calendar";
 import { Panel } from "@/components/ui/panel";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { formatDate, getDownloadUrl, truncate } from "@/lib/utils";
+import { formatDate, getNoticeDownloadHref, truncate } from "@/lib/utils";
 
 export default async function DashboardPage() {
   await requireUser();
@@ -62,30 +63,6 @@ export default async function DashboardPage() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel>
-          <h3 className="font-heading text-lg font-semibold text-text">Latest notices</h3>
-          <div className="mt-4 space-y-3">
-            {notices.slice(0, 6).map((notice) => (
-              <div key={notice.id} className="rounded-2xl border border-border bg-card p-4">
-                <p className="text-sm text-text">{notice.text}</p>
-                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-subtle">
-                  <span>{formatDate(notice.date)}</span>
-                  {notice.fileUrl ? (
-                    <div className="flex items-center gap-3">
-                      <a href={notice.fileUrl} target="_blank" rel="noreferrer" className="font-medium text-accent">
-                        View
-                      </a>
-                      <a href={getDownloadUrl(notice.fileUrl)} download className="font-medium text-accent">
-                        Download
-                      </a>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        <Panel>
           <h3 className="font-heading text-lg font-semibold text-text">Teachers and labs</h3>
           <div className="mt-4 space-y-4">
             <div>
@@ -111,7 +88,7 @@ export default async function DashboardPage() {
                         <a href={lab.fileUrl} target="_blank" rel="noreferrer" className="text-accent">
                           Open
                         </a>
-                        <a href={getDownloadUrl(lab.fileUrl)} download className="text-accent">
+                        <a href={lab.fileUrl} target="_blank" rel="noreferrer" download className="text-accent">
                           Download
                         </a>
                       </div>
@@ -123,6 +100,28 @@ export default async function DashboardPage() {
           </div>
         </Panel>
       </div>
+
+      <Panel>
+        <h3 className="font-heading text-lg font-semibold text-text">Latest notices</h3>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {notices.slice(0, 6).map((notice) => (
+            <div key={notice.id} className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-sm text-text">{notice.text || "Attachment-only notice"}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-subtle">
+                <span>{formatDate(notice.date)}</span>
+                <Link href={`/notices/${notice.id}`} className="font-medium text-accent">
+                  Open in website
+                </Link>
+                {notice.fileUrl ? (
+                  <a href={getNoticeDownloadHref(notice.id)} target="_blank" rel="noreferrer" className="font-medium text-accent">
+                    Download
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Panel>
     </div>
   );
 }

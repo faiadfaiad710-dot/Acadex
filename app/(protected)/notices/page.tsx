@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { deleteNoticeAction, saveNoticeAction } from "@/lib/actions/admin";
 import { getCurrentUser } from "@/lib/auth/session";
 import { requireUser } from "@/lib/auth/guards";
 import { getAllNotices } from "@/lib/data";
 import { Panel } from "@/components/ui/panel";
-import { formatDate, getDownloadUrl } from "@/lib/utils";
+import { formatDate, getNoticeDownloadHref } from "@/lib/utils";
 
 export default async function NoticesPage() {
   await requireUser();
@@ -18,8 +19,7 @@ export default async function NoticesPage() {
           <form action={saveNoticeAction} className="mt-6 space-y-4">
             <textarea
               name="text"
-              placeholder="Notice text"
-              required
+              placeholder="Notice text (optional if a file is uploaded)"
               rows={5}
               className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent"
             />
@@ -39,10 +39,10 @@ export default async function NoticesPage() {
                 <span>{formatDate(notice.date)}</span>
                 {notice.fileUrl ? (
                   <>
-                    <a href={notice.fileUrl} target="_blank" rel="noreferrer" className="font-medium text-accent">
-                      View
-                    </a>
-                    <a href={getDownloadUrl(notice.fileUrl)} download className="font-medium text-accent">
+                    <Link href={`/notices/${notice.id}`} className="font-medium text-accent">
+                      Open in website
+                    </Link>
+                    <a href={getNoticeDownloadHref(notice.id)} target="_blank" rel="noreferrer" className="font-medium text-accent">
                       Download
                     </a>
                   </>

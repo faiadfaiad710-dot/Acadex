@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { FileRecord, Subject } from "@/lib/types";
 import { Panel } from "@/components/ui/panel";
-import { formatDate, getFileDownloadHref, getFileOpenHref } from "@/lib/utils";
+import { formatDate, getFileDownloadHref, getFileViewerHref } from "@/lib/utils";
 import { useAppConfig } from "@/providers/app-providers";
 
 export function SearchPanel({
@@ -66,10 +66,10 @@ export function SearchPanel({
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs">
                 <span className="text-subtle">{formatDate(file.uploadDate)}</span>
-                <a href={getFileOpenHref(file.id)} target="_blank" rel="noreferrer" className="rounded-full bg-accentSoft px-3 py-1 font-medium text-accent">
+                <a href={getFileViewerHref(file.id)} className="rounded-full bg-accentSoft px-3 py-1 font-medium text-accent">
                   Open
                 </a>
-                <a href={getFileDownloadHref(file.id)} className="rounded-full bg-accent px-3 py-1 font-medium text-white">
+                <a href={getFileDownloadHref(file.id)} target="_blank" rel="noreferrer" className="rounded-full bg-accent px-3 py-1 font-medium text-white">
                   Download
                 </a>
               </div>

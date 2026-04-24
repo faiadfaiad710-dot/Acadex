@@ -3,13 +3,21 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+declare global {
+  interface Window {
+    __acadexIntroToken?: string;
+  }
+}
+
 export function LoginIntro() {
   const [show, setShow] = useState(false);
   const [phase, setPhase] = useState<"acadex" | "name">("acadex");
 
   useEffect(() => {
-    if (window.sessionStorage.getItem("acadex-intro") !== "1") return;
+    const token = window.sessionStorage.getItem("acadex-intro");
+    if (!token || window.__acadexIntroToken === token) return;
 
+    window.__acadexIntroToken = token;
     window.sessionStorage.removeItem("acadex-intro");
     setShow(true);
     setPhase("acadex");
@@ -42,7 +50,7 @@ export function LoginIntro() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96, y: -12 }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="brand-gradient font-heading text-6xl font-black tracking-tight sm:text-8xl"
+                  className="brand-gradient brand-script text-6xl font-black tracking-tight sm:text-8xl"
                 >
                   Acadex
                 </motion.h1>
@@ -53,7 +61,7 @@ export function LoginIntro() {
                   animate={{ opacity: 1, y: 0, clipPath: "inset(0 0% 0 0)" }}
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.55, ease: "easeOut" }}
-                  className="brand-gradient font-heading text-3xl font-black uppercase tracking-[0.18em] sm:text-5xl"
+                  className="brand-gradient brand-script text-3xl font-black tracking-[0.12em] sm:text-5xl"
                 >
                   FAHIM MONTASIR
                 </motion.h2>

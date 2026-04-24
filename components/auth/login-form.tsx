@@ -35,8 +35,7 @@ export function LoginForm() {
             const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
             const token = await credential.user.getIdToken(true);
             await signInWithTokenAction(token);
-            window.sessionStorage.setItem("acadex-intro", "1");
-            router.refresh();
+            window.sessionStorage.setItem("acadex-intro", String(Date.now()));
             router.push("/dashboard");
           } catch (authError) {
             setError(authError instanceof Error ? authError.message : "Unable to sign in");

@@ -3,7 +3,7 @@ import { getAllFiles, getAllSubjects } from "@/lib/data";
 import { Panel } from "@/components/ui/panel";
 import { UploadForm } from "@/components/upload/upload-form";
 import { DeleteFileButton } from "@/components/upload/delete-file-button";
-import { bytesToSize, formatDate, getFileDownloadHref, getFileOpenHref } from "@/lib/utils";
+import { bytesToSize, formatDate, getFileDownloadHref, getFileViewerHref } from "@/lib/utils";
 
 export default async function UploadPage() {
   await requireAdmin();
@@ -31,10 +31,10 @@ export default async function UploadPage() {
                   <p>{formatDate(file.uploadDate)}</p>
                   <p>{bytesToSize(file.fileSize)}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-3 font-medium">
-                    <a href={getFileOpenHref(file.id)} target="_blank" rel="noreferrer" className="text-accent">
+                    <a href={getFileViewerHref(file.id)} className="text-accent">
                       Open
                     </a>
-                    <a href={getFileDownloadHref(file.id)} className="text-accent">
+                    <a href={getFileDownloadHref(file.id)} target="_blank" rel="noreferrer" className="text-accent">
                       Download
                     </a>
                     <DeleteFileButton fileId={file.id} />

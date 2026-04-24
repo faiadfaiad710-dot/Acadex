@@ -87,7 +87,7 @@ export function ExamCalendar({ exams }: { exams: ExamEvent[] }) {
                   {dayExams.map((exam) => (
                     <div key={exam.id} className="rounded-xl bg-accentSoft px-2 py-2 text-[10px] text-accent sm:text-xs">
                       <p className="font-bold">{exam.title}</p>
-                      <p>{exam.subjectName}</p>
+                      <p>{(exam.kind || "exam") === "event" ? "Event" : exam.subjectName}</p>
                       {exam.startTime ? <p>{exam.startTime}</p> : null}
                     </div>
                   ))}

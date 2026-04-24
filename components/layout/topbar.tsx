@@ -46,7 +46,7 @@ export function Topbar({
             <Menu className="size-5" />
           </button>
           <div>
-            <p className="brand-gradient font-heading text-3xl font-black leading-none tracking-tight">Acadex</p>
+            <p className="brand-gradient brand-script text-4xl font-black leading-none">Acadex</p>
             <h1 className="font-heading text-xl font-bold text-text sm:text-2xl">{title}</h1>
             <p className="text-sm text-subtle">{subtitle}</p>
           </div>
