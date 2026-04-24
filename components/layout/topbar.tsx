@@ -77,7 +77,7 @@ export function Topbar({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 lg:justify-end">
-          <Link href="/notices" className="relative flex items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-sm text-text">
+          <Link href="/updates" className="relative flex items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-sm text-text">
             <Bell className="size-4 text-subtle" />
             <span>Updates</span>
             {unreadNotificationCount > 0 ? (

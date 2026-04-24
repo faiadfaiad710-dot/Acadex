@@ -29,6 +29,9 @@ function getRouteTitle(pathname: string, role: UserRole) {
   if (pathname.startsWith("/notices")) {
     return { title: "Notices", subtitle: "Read and publish important announcements." };
   }
+  if (pathname.startsWith("/updates")) {
+    return { title: "Updates", subtitle: "See new uploads, notices, and recent academic changes." };
+  }
   if (pathname.startsWith("/teachers")) {
     return { title: "Teachers", subtitle: "See teachers and assigned subjects." };
   }
