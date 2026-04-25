@@ -11,20 +11,23 @@ export default async function TeachersPage() {
   const subjectMap = new Map(subjects.map((subject) => [subject.id, subject.name]));
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[430px_1fr]">
+    <div className="space-y-5">
       {isAdmin ? (
         <Panel>
           <h2 className="font-heading text-xl font-semibold text-text">Teacher management</h2>
           <p className="mt-2 text-sm text-subtle">Admins can add or remove teachers and link them to one or more subjects.</p>
 
-          <form action={saveTeacherAction} className="mt-6 space-y-4">
-            <input name="name" placeholder="Teacher name" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
-            <input name="designation" placeholder="Designation" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
-            <input name="email" type="email" placeholder="Email" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
-            <input name="phone" placeholder="Phone" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
+          <form action={saveTeacherAction} className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
+            <div className="space-y-4">
+              <input name="name" placeholder="Teacher name" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
+              <input name="designation" placeholder="Designation" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
+              <input name="email" type="email" placeholder="Email" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
+              <input name="phone" placeholder="Phone" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
+              <button className="w-full rounded-2xl bg-accent px-4 py-3 font-medium text-white transition hover:opacity-90">Save teacher</button>
+            </div>
             <div className="rounded-2xl border border-border bg-card p-4">
               <p className="text-sm font-medium text-text">Assign subjects</p>
-              <div className="mt-3 grid gap-2">
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {subjects.map((subject) => (
                   <label key={subject.id} className="flex items-center gap-3 text-sm text-subtle">
                     <input type="checkbox" name="subjectIds" value={subject.id} className="rounded border-border" />
@@ -35,7 +38,6 @@ export default async function TeachersPage() {
                 ))}
               </div>
             </div>
-            <button className="w-full rounded-2xl bg-accent px-4 py-3 font-medium text-white transition hover:opacity-90">Save teacher</button>
           </form>
         </Panel>
       ) : null}

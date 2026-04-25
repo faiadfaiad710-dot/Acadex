@@ -107,6 +107,7 @@ export function AppShell({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
               className="fixed inset-0 z-40 bg-slate-950/40"
               onClick={() => setOpen(false)}
             />
@@ -114,10 +115,10 @@ export function AppShell({
               initial={{ x: -320 }}
               animate={{ x: 0 }}
               exit={{ x: -320 }}
-              transition={{ type: "spring", stiffness: 260, damping: 30 }}
-              className="fixed left-3 top-3 z-[60] w-[calc(100vw-1.5rem)] max-w-[340px]"
+              transition={{ duration: 0.12, ease: "easeOut" }}
+              className="fixed left-3 top-3 z-[60] h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-[340px] overflow-y-auto overscroll-contain"
             >
-              <Sidebar role={role} onNavigate={() => setOpen(false)} onClose={() => setOpen(false)} className="min-h-[calc(100vh-1.5rem)]" />
+              <Sidebar role={role} onNavigate={() => setOpen(false)} onClose={() => setOpen(false)} className="min-h-full max-h-none" />
             </motion.div>
           </>
         ) : null}

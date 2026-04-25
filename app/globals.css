@@ -33,7 +33,6 @@ body {
   color: var(--color-text);
   font-family: var(--font-body), sans-serif;
   background-size: 180% 180%, 150% 150%, 160% 160%, cover;
-  animation: backgroundFlow 24s linear infinite;
 }
 
 [data-language="bn"] body {
@@ -46,96 +45,46 @@ body {
 
 .glass-card {
   background: color-mix(in srgb, var(--color-card) 90%, transparent);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
   position: relative;
   overflow: hidden;
 }
 
-[data-theme="liquid"] .glass-card {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
-    color-mix(in srgb, var(--color-card) 68%, transparent);
-  border-color: rgba(255, 255, 255, 0.16);
+[data-surface="dark"] .glass-card,
+[data-surface="black"] .glass-card {
+  background: color-mix(in srgb, var(--color-card) 92%, transparent);
   box-shadow:
-    0 16px 44px rgba(55, 79, 109, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.34),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(28px) saturate(140%);
+    0 16px 44px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-[data-theme="liquid"] .glass-card::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: inherit;
+[data-surface="light"] body {
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.24), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.01));
-  pointer-events: none;
+    radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--color-accent-soft) 90%, transparent) 0, transparent 28%),
+    radial-gradient(circle at 85% 10%, color-mix(in srgb, var(--color-accent) 24%, transparent) 0, transparent 24%),
+    radial-gradient(circle at 50% 95%, color-mix(in srgb, var(--color-success) 18%, transparent) 0, transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-base) 94%, white) 0%, var(--color-base) 100%);
 }
 
-[data-theme="liquid"] body {
+[data-surface="dark"] body {
   background:
-    radial-gradient(circle at 12% 18%, rgba(131, 171, 255, 0.1) 0, transparent 24%),
-    radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.36) 0, transparent 22%),
-    radial-gradient(circle at 50% 100%, rgba(29, 187, 157, 0.08) 0, transparent 28%),
-    linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+    radial-gradient(circle at 18% 14%, color-mix(in srgb, var(--color-accent) 18%, transparent) 0, transparent 22%),
+    radial-gradient(circle at 82% 10%, rgba(255, 255, 255, 0.03) 0, transparent 18%),
+    linear-gradient(180deg, #111827 0%, #0a101b 100%);
 }
 
-[data-theme="liquid"] .bg-card,
-[data-theme="liquid"] .bg-muted {
+[data-surface="black"] body {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)) !important;
-  backdrop-filter: blur(24px) saturate(140%);
+    radial-gradient(circle at 20% 14%, color-mix(in srgb, var(--color-accent) 14%, transparent) 0, transparent 20%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.02) 0, transparent 16%),
+    linear-gradient(180deg, #05070b 0%, #010204 100%);
 }
 
-[data-theme="liquid"] .border-border {
-  border-color: rgba(255, 255, 255, 0.16) !important;
-}
-
-[data-theme="liquid"] input,
-[data-theme="liquid"] select,
-[data-theme="liquid"] textarea {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05)) !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    0 10px 24px rgba(70, 88, 112, 0.05);
-  backdrop-filter: blur(20px) saturate(145%);
-}
-
-[data-theme="liquid"] input:focus,
-[data-theme="liquid"] select:focus,
-[data-theme="liquid"] textarea:focus {
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.32),
-    0 0 0 1px rgba(255, 255, 255, 0.14),
-    0 14px 28px rgba(45, 135, 255, 0.08);
-}
-
-[data-theme="liquid"] button,
-[data-theme="liquid"] a.rounded-full,
-[data-theme="liquid"] a.rounded-2xl {
-  backdrop-filter: blur(16px) saturate(145%);
-}
-
-[data-theme="liquid"] .bg-accent {
-  background:
-    linear-gradient(180deg, rgba(79, 146, 255, 0.58), rgba(45, 135, 255, 0.44)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    0 12px 28px rgba(45, 135, 255, 0.1);
-}
-
-[data-theme="liquid"] .bg-text {
-  background:
-    linear-gradient(180deg, rgba(23, 35, 56, 0.5), rgba(18, 32, 51, 0.38)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 12px 28px rgba(18, 32, 51, 0.1);
+[data-surface="dark"] .bg-card,
+[data-surface="dark"] .bg-muted,
+[data-surface="black"] .bg-card,
+[data-surface="black"] .bg-muted {
+  background: color-mix(in srgb, var(--color-card) 96%, transparent) !important;
 }
 
 .soft-grid {
@@ -149,7 +98,7 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: brandFlow 5.5s linear infinite;
+  animation: brandFlow 7s linear infinite;
 }
 
 .brand-script {
@@ -198,7 +147,29 @@ body {
     radial-gradient(circle at 80% 30%, color-mix(in srgb, var(--color-success) 28%, transparent), transparent 34%),
     radial-gradient(circle at 50% 90%, color-mix(in srgb, #f59e0b 28%, transparent), transparent 36%);
   background-size: 180% 180%;
-  animation: auroraFlow 10s linear infinite;
+  animation: auroraFlow 16s linear infinite;
+}
+
+html[data-performance="full"] body {
+  animation: backgroundFlow 30s linear infinite;
+}
+
+button.bg-accent,
+a.bg-accent,
+button.bg-text,
+a.bg-text {
+  background-size: 220% 100% !important;
+  animation: buttonFlow 7s linear infinite;
+}
+
+button.bg-accent,
+a.bg-accent {
+  background-image: linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 88%, white), var(--color-accent), color-mix(in srgb, var(--color-success) 50%, var(--color-accent)), var(--color-accent)) !important;
+}
+
+button.bg-text,
+a.bg-text {
+  background-image: linear-gradient(90deg, color-mix(in srgb, var(--color-text) 92%, #0b1220), var(--color-text), color-mix(in srgb, var(--color-accent) 18%, var(--color-text)), var(--color-text)) !important;
 }
 
 .wipe-reveal {
@@ -262,6 +233,15 @@ body {
   }
 }
 
+@keyframes buttonFlow {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 220% 50%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   body,
   .brand-gradient,
@@ -279,6 +259,10 @@ body {
 [data-performance="lite"] body,
 [data-performance="lite"] .brand-gradient,
 [data-performance="lite"] .animated-aurora,
+[data-performance="lite"] button.bg-accent,
+[data-performance="lite"] a.bg-accent,
+[data-performance="lite"] button.bg-text,
+[data-performance="lite"] a.bg-text,
 [data-performance="lite"] .wipe-reveal::after,
 [data-performance="lite"] .interactive-lift:hover::after {
   animation: none !important;
@@ -290,6 +274,7 @@ body {
 [data-performance="lite"] input,
 [data-performance="lite"] select,
 [data-performance="lite"] textarea,
+[data-performance="lite"] a,
 [data-performance="lite"] button {
   backdrop-filter: none !important;
 }

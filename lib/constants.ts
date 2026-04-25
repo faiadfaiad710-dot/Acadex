@@ -1,4 +1,4 @@
-import { ThemeName } from "@/lib/types";
+import { SurfaceMode, ThemeName } from "@/lib/types";
 
 export const DEFAULT_SUBJECTS = [
   { name: "Computer Application in Pharmacy", code: "Pharm-2111" },
@@ -10,6 +10,48 @@ export const DEFAULT_SUBJECTS = [
   { name: "Other", code: "OTHER" }
 ] as const;
 
+export const SURFACE_MODES: Record<
+  SurfaceMode,
+  {
+    label: string;
+    colors: Record<string, string>;
+  }
+> = {
+  light: {
+    label: "Light",
+    colors: {
+      "--color-base": "#eef3ff",
+      "--color-card": "#ffffff",
+      "--color-muted": "#dfe7fb",
+      "--color-border": "#c2d1f5",
+      "--color-text": "#0f1b3d",
+      "--color-subtle": "#516089"
+    }
+  },
+  dark: {
+    label: "Dark",
+    colors: {
+      "--color-base": "#0f1726",
+      "--color-card": "#172234",
+      "--color-muted": "#213148",
+      "--color-border": "#344860",
+      "--color-text": "#edf4ff",
+      "--color-subtle": "#adc1dd"
+    }
+  },
+  black: {
+    label: "Black",
+    colors: {
+      "--color-base": "#020305",
+      "--color-card": "#090c12",
+      "--color-muted": "#11161f",
+      "--color-border": "#202938",
+      "--color-text": "#f4f7fb",
+      "--color-subtle": "#93a0b5"
+    }
+  }
+};
+
 export const THEMES: Record<
   ThemeName,
   {
@@ -20,12 +62,6 @@ export const THEMES: Record<
   aurora: {
     label: "Aurora",
     colors: {
-      "--color-base": "#f7f4ed",
-      "--color-card": "#fffdf8",
-      "--color-muted": "#efe8dd",
-      "--color-border": "#dccfbd",
-      "--color-text": "#2e2a24",
-      "--color-subtle": "#6b6258",
       "--color-accent": "#c46334",
       "--color-accent-soft": "#f2d5c7",
       "--color-success": "#2f855a",
@@ -35,12 +71,6 @@ export const THEMES: Record<
   scholar: {
     label: "Scholar Blue",
     colors: {
-      "--color-base": "#eef3ff",
-      "--color-card": "#ffffff",
-      "--color-muted": "#dfe7fb",
-      "--color-border": "#c2d1f5",
-      "--color-text": "#0f1b3d",
-      "--color-subtle": "#516089",
       "--color-accent": "#315efb",
       "--color-accent-soft": "#d8e2ff",
       "--color-success": "#0f9d7a",
@@ -50,12 +80,6 @@ export const THEMES: Record<
   sunrise: {
     label: "Sunrise Gold",
     colors: {
-      "--color-base": "#fff7e8",
-      "--color-card": "#fffdf7",
-      "--color-muted": "#ffe5b8",
-      "--color-border": "#f4cf88",
-      "--color-text": "#473117",
-      "--color-subtle": "#7e5d30",
       "--color-accent": "#dd7a00",
       "--color-accent-soft": "#ffe6bf",
       "--color-success": "#2c8b54",
@@ -65,12 +89,6 @@ export const THEMES: Record<
   emerald: {
     label: "Emerald Garden",
     colors: {
-      "--color-base": "#eefaf4",
-      "--color-card": "#fbfffd",
-      "--color-muted": "#d8efe3",
-      "--color-border": "#b8dccb",
-      "--color-text": "#173a2e",
-      "--color-subtle": "#4d7567",
       "--color-accent": "#1c8b5f",
       "--color-accent-soft": "#d0f0e2",
       "--color-success": "#107a4f",
@@ -80,31 +98,10 @@ export const THEMES: Record<
   midnight: {
     label: "Midnight Slate",
     colors: {
-      "--color-base": "#101723",
-      "--color-card": "#162131",
-      "--color-muted": "#213148",
-      "--color-border": "#324760",
-      "--color-text": "#edf4ff",
-      "--color-subtle": "#adc1dd",
       "--color-accent": "#4ab0ff",
       "--color-accent-soft": "#163755",
       "--color-success": "#4ad8a7",
       "--color-danger": "#ff7b7b"
-    }
-  },
-  liquid: {
-    label: "Liquid Glass",
-    colors: {
-      "--color-base": "#f4f7fb",
-      "--color-card": "rgba(255,255,255,0.11)",
-      "--color-muted": "rgba(255,255,255,0.07)",
-      "--color-border": "rgba(255,255,255,0.20)",
-      "--color-text": "#122033",
-      "--color-subtle": "#516174",
-      "--color-accent": "#2d87ff",
-      "--color-accent-soft": "rgba(255,255,255,0.08)",
-      "--color-success": "#1dbb9d",
-      "--color-danger": "#f7657d"
     }
   }
 };

@@ -13,7 +13,7 @@ import { SearchPanel } from "@/components/dashboard/search-panel";
 import { ExamCalendar } from "@/components/calendar/exam-calendar";
 import { Panel } from "@/components/ui/panel";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { formatDate, getNoticeDownloadHref, truncate } from "@/lib/utils";
+import { formatDate, getNoticeDownloadHref } from "@/lib/utils";
 
 export default async function DashboardPage() {
   await requireUser();
@@ -50,80 +50,28 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-5">
-      <section className="glass-card relative overflow-hidden rounded-[32px] border border-border/70 p-6 text-center shadow-card sm:p-8">
+      <section className="glass-card relative overflow-hidden rounded-[32px] border border-border/70 p-6 shadow-card sm:p-8">
         <div className="animated-aurora absolute inset-0 -z-10 opacity-40" />
-        <p className="text-xs font-bold uppercase tracking-[0.35em] text-subtle">Welcome to</p>
-        <h2 className="brand-gradient mt-2 font-heading text-6xl font-black tracking-tight sm:text-8xl">Acadex</h2>
-        <p className="mt-3 text-sm font-medium text-subtle">Your academic files, notices, calendar, teachers, and labs in one place.</p>
+        <div className="space-y-5">
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.35em] text-subtle">Welcome to</p>
+            <h2 className="brand-gradient mt-2 font-heading text-5xl font-black tracking-tight sm:text-7xl">Acadex</h2>
+            <p className="mt-3 text-sm font-medium text-subtle">Your academic files, notices, calendar, teachers, and labs in one place.</p>
+          </div>
+          <SearchPanel files={files} subjects={subjects} notices={notices} labs={labs} teachers={teachers} resources={subjectResources} compact />
+        </div>
       </section>
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Subjects" value={subjects.length} helper="Available course boxes" />
-        <StatCard label="Total classes" value={subjects.length} helper="Classes linked by subject" />
+        <StatCard label="Total files" value={files.length + subjectResources.filter((resource) => resource.type === "file").length} helper="Website files and subject files" />
         <StatCard label="PDF uploaded" value={totalPdfCount} helper="PDF files across the website" />
         <StatCard label="Notices" value={notices.length} helper="Latest academic notices" />
       </div>
 
-      <SearchPanel files={files} subjects={subjects} />
-
       <section id="calendar">
         <ExamCalendar exams={exams} />
       </section>
-
-      <Panel>
-        <h3 className="font-heading text-lg font-semibold text-text">Subjects</h3>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {subjects.map((subject) => (
-            <div key={subject.id} className="rounded-2xl border border-border bg-card p-4">
-              <p className="font-medium text-text">{subject.name}</p>
-              <p className="mt-1 text-sm text-subtle">{subject.code}</p>
-              <p className="mt-3 text-xs text-subtle">
-                {files.filter((file) => file.subjectId === subject.id).length} file(s)
-              </p>
-            </div>
-          ))}
-        </div>
-      </Panel>
-
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Panel>
-          <h3 className="font-heading text-lg font-semibold text-text">Teachers and labs</h3>
-          <div className="mt-4 space-y-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-subtle">Teachers</p>
-              <div className="mt-3 space-y-2">
-                {teachers.slice(0, 5).map((teacher) => (
-                  <div key={teacher.id} className="rounded-2xl border border-border bg-card p-4">
-                    <p className="font-medium text-text">{teacher.name}</p>
-                    <p className="text-sm text-subtle">{teacher.designation || "Faculty"}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-subtle">Lab resources</p>
-              <div className="mt-3 space-y-2">
-                {labs.slice(0, 4).map((lab) => (
-                  <div key={lab.id} className="rounded-2xl border border-border bg-card p-4">
-                    <p className="font-medium text-text">{truncate(lab.title, 55)}</p>
-                    <p className="text-sm text-subtle">{lab.subjectName}</p>
-                    {lab.fileUrl ? (
-                      <div className="mt-2 flex gap-3 text-sm font-medium">
-                        <a href={lab.fileUrl} target="_blank" rel="noreferrer" className="text-accent">
-                          Open
-                        </a>
-                        <a href={lab.fileUrl} target="_blank" rel="noreferrer" download className="text-accent">
-                          Download
-                        </a>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Panel>
-      </div>
 
       <Panel>
         <h3 className="font-heading text-lg font-semibold text-text">Latest notices</h3>

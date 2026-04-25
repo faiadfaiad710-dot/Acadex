@@ -1,6 +1,7 @@
 export type UserRole = "admin" | "user";
 export type Language = "en" | "bn";
-export type ThemeName = "aurora" | "scholar" | "sunrise" | "emerald" | "midnight" | "liquid";
+export type ThemeName = "aurora" | "scholar" | "sunrise" | "emerald" | "midnight";
+export type SurfaceMode = "light" | "dark" | "black";
 
 export interface UserProfile {
   uid: string;

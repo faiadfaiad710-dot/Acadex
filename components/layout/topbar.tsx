@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, BookOpen, CalendarDays, Home, Languages, Menu, MoonStar, Users } from "lucide-react";
+import { Bell, BookOpen, CalendarDays, Home, Languages, Menu, Users } from "lucide-react";
 import { motion } from "framer-motion";
-import { THEMES } from "@/lib/constants";
 import { signOutAction } from "@/lib/actions/auth";
 import { useAppConfig } from "@/providers/app-providers";
 import { cn } from "@/lib/utils";
@@ -28,7 +27,7 @@ export function Topbar({
   onMenuClick: () => void;
   unreadNotificationCount: number;
 }) {
-  const { dictionary, language, setLanguage, theme, setTheme } = useAppConfig();
+  const { dictionary, language, setLanguage } = useAppConfig();
   const pathname = usePathname();
 
   return (
@@ -95,20 +94,6 @@ export function Topbar({
             <button className={`text-sm ${language === "bn" ? "font-bold text-text" : "text-subtle"}`} onClick={() => setLanguage("bn")}>
               {dictionary.bangla}
             </button>
-          </div>
-          <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2">
-            <MoonStar className="size-4 text-subtle" />
-            <select
-              className="bg-transparent text-sm text-text outline-none"
-              value={theme}
-              onChange={(event) => setTheme(event.target.value as keyof typeof THEMES)}
-            >
-              {Object.entries(THEMES).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value.label}
-                </option>
-              ))}
-            </select>
           </div>
           <form action={signOutAction}>
             <button className="rounded-2xl bg-text px-4 py-2 text-sm font-medium text-base transition hover:opacity-90">

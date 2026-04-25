@@ -11,7 +11,7 @@ export function MouseAura() {
   useEffect(() => {
     const media = window.matchMedia("(pointer: fine)");
     const root = document.documentElement;
-    const allow = media.matches && root.dataset.performance !== "lite";
+    const allow = media.matches && root.dataset.performance !== "lite" && window.innerWidth >= 1280;
     setEnabled(allow);
     if (!allow) return;
 
