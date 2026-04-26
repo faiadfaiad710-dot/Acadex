@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import { MAX_FILE_SIZE, SESSION_COOKIE_NAME } from "@/lib/constants";
 
 export const runtime = "nodejs";
@@ -107,6 +108,81 @@ export async function POST(req: Request) {
 
     if (!profileSnapshot.exists || profile?.role !== "admin") {
       return Response.json({ error: "Only admins can upload subject files." }, { status: 403 });
+    }
+
+    const contentType = req.headers.get("content-type") || "";
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData().catch(() => null);
+      if (!formData) {
+        return Response.json({ error: "Failed to parse upload form. Please try again." }, { status: 400 });
+      }
+      const subjectId = String(formData.get("subjectId") || "").trim();
+      const sectionId = String(formData.get("sectionId") || "").trim();
+      const parentResourceId = String(formData.get("parentResourceId") || "").trim();
+      const name = String(formData.get("name") || "").trim();
+      const files = formData
+        .getAll("files")
+        .filter((item): item is File => item instanceof File && item.size > 0);
+      const singleFile = formData.get("file");
+      if (!files.length && singleFile instanceof File && singleFile.size > 0) {
+        files.push(singleFile);
+      }
+
+      if (!subjectId || !sectionId || !files.length) {
+        return Response.json({ error: "Missing upload details." }, { status: 400 });
+      }
+
+      const existingSnapshot = await adminDb.collection("subjectResources").where("subjectId", "==", subjectId).get();
+      const existingResources = existingSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Record<string, unknown>)
+      })) as Array<SubjectResourceDoc & Record<string, unknown>>;
+
+      const uploadedResources: Array<{ id: string; name: string }> = [];
+
+      for (const file of files) {
+        if (file.size > MAX_FILE_SIZE) {
+          return Response.json({ error: `${file.name} is too large. Maximum size is 25MB.` }, { status: 400 });
+        }
+
+        const relativeSegments = String((file as File & { webkitRelativePath?: string }).webkitRelativePath || "")
+          .split("/")
+          .map((segment) => segment.trim())
+          .filter(Boolean);
+        const nestedFolderSegments = relativeSegments.slice(0, -1);
+        const finalParentId = await ensureSubjectResourceFolderChain({
+          adminDb,
+          subjectId,
+          sectionId,
+          baseParentId: parentResourceId,
+          segments: nestedFolderSegments,
+          resources: existingResources
+        });
+
+        const uploaded = await uploadToCloudinary(file, `academic-files/subjects/${subjectId}`);
+        const finalName = file.name || name || "Uploaded file";
+        const saved = await adminDb.collection("subjectResources").add({
+          subjectId,
+          sectionId,
+          parentResourceId: finalParentId,
+          name: finalName,
+          type: "file",
+          fileUrl: uploaded.secure_url,
+          publicId: uploaded.public_id,
+          fileType: file.type || "unknown",
+          originalName: file.name || finalName,
+          format: file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() || "" : "",
+          resourceType: "raw",
+          createdAt: new Date().toISOString()
+        });
+
+        uploadedResources.push({ id: saved.id, name: finalName });
+      }
+
+      revalidatePath("/subjects");
+      revalidatePath(`/subjects/${subjectId}`);
+
+      return Response.json({ count: uploadedResources.length, files: uploadedResources });
     }
 
     const body = (await req.json().catch(() => null)) as

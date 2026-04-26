@@ -1,6 +1,7 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { downloadFromGoogleDrive } from "@/lib/google-drive";
 import { SubjectResource } from "@/lib/types";
 
 const extensionByMime: Record<string, string> = {
@@ -39,6 +40,26 @@ function cloudinaryCandidates(url: string, mode: string) {
   const rawTransformed = cloudinaryUrlForMode(rawUrl, mode);
 
   return Array.from(new Set([url, transformed, rawUrl, rawTransformed]));
+}
+
+function formatSuffix(publicId: string, format?: string) {
+  const cleanFormat = String(format || "").trim().toLowerCase();
+  if (!cleanFormat) return "";
+  return publicId.toLowerCase().endsWith(`.${cleanFormat}`) ? "" : `.${cleanFormat}`;
+}
+
+function publicIdCandidates(resource: SubjectResource, mode: string) {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const publicId = String(resource.publicId || "").trim();
+  if (!cloudName || !publicId) {
+    return [];
+  }
+
+  const resourceType = String(resource.resourceType || "raw").trim() || "raw";
+  const suffix = formatSuffix(publicId, resource.format);
+  const base = `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${publicId}${suffix}`;
+  const transformed = cloudinaryUrlForMode(base, mode);
+  return Array.from(new Set([base, transformed]));
 }
 
 function filenameFromResource(resource: SubjectResource) {
@@ -112,6 +133,11 @@ function detectMimeFromBytes(bytes: Uint8Array) {
   return "";
 }
 
+function looksLikeMarkup(bytes: Uint8Array) {
+  const sample = new TextDecoder("utf-8", { fatal: false }).decode(bytes.slice(0, 200)).trim().toLowerCase();
+  return sample.startsWith("<!doctype") || sample.startsWith("<html") || sample.startsWith("<?xml") || sample.startsWith("{\"error\"");
+}
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ mode: string }> }) {
   const user = await getCurrentUser();
   if (!user) {
@@ -138,27 +164,74 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ mode
     return Response.json({ error: "This resource is not a file" }, { status: 400 });
   }
 
-  let upstream: Response | null = null;
-  for (const candidate of cloudinaryCandidates(resource.fileUrl, mode)) {
-    const response = await fetch(candidate, { cache: "no-store" }).catch(() => null);
-    if (response?.ok && response.body) {
-      upstream = response;
-      break;
+  if (resource.resourceType === "drive" && resource.publicId) {
+    const upstream = await downloadFromGoogleDrive(resource.publicId).catch(() => null);
+    if (!upstream?.ok) {
+      return Response.json({ error: "Resource could not be loaded." }, { status: 502 });
     }
+
+    const arrayBuffer = await upstream.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const headers = new Headers();
+    const upstreamType = upstream.headers.get("content-type") || "";
+    const contentType =
+      upstreamType && upstreamType !== "application/octet-stream"
+        ? upstreamType
+        : detectMimeFromBytes(bytes) || inferContentType(resource);
+    const filename = filenameWithExtension(filenameFromResource(resource), contentType);
+    headers.set("Content-Type", contentType);
+    headers.set("Cache-Control", "private, max-age=60");
+    headers.set(
+      "Content-Disposition",
+      `${mode === "download" ? "attachment" : "inline"}; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
+    );
+
+    return new Response(arrayBuffer, { headers });
   }
 
-  if (!upstream?.ok || !upstream.body) {
+  const candidates = Array.from(
+    new Set([
+      ...cloudinaryCandidates(resource.fileUrl, mode),
+      ...publicIdCandidates(resource, mode)
+    ])
+  );
+  const expectedType = inferContentType(resource);
+  let selectedArrayBuffer: ArrayBuffer | null = null;
+  let selectedContentType = "";
+  for (const candidate of candidates) {
+    const response = await fetch(candidate, { cache: "no-store" }).catch(() => null);
+    if (!response?.ok || !response.body) {
+      continue;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const upstreamType = (response.headers.get("content-type") || "").toLowerCase();
+    const detectedType =
+      upstreamType && upstreamType !== "application/octet-stream"
+        ? upstreamType
+        : detectMimeFromBytes(bytes) || expectedType;
+    const isHtmlLike = upstreamType.includes("text/html") || upstreamType.includes("application/json") || looksLikeMarkup(bytes);
+
+    if (isHtmlLike && !expectedType.startsWith("text/")) {
+      continue;
+    }
+
+    selectedArrayBuffer = arrayBuffer;
+    selectedContentType = detectedType;
+    break;
+  }
+
+  if (!selectedArrayBuffer) {
+    const fallback = candidates[0];
+    if (fallback) {
+      return NextResponse.redirect(fallback, { status: 307 });
+    }
     return Response.json({ error: "Resource could not be loaded." }, { status: 502 });
   }
 
-  const arrayBuffer = await upstream.arrayBuffer();
-  const bytes = new Uint8Array(arrayBuffer);
   const headers = new Headers();
-  const upstreamType = upstream.headers.get("content-type") || "";
-  const contentType =
-    upstreamType && upstreamType !== "application/octet-stream"
-      ? upstreamType
-      : detectMimeFromBytes(bytes) || inferContentType(resource);
+  const contentType = selectedContentType || expectedType;
   const filename = filenameWithExtension(filenameFromResource(resource), contentType);
   headers.set("Content-Type", contentType);
   headers.set("Cache-Control", "private, max-age=60");
@@ -167,5 +240,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ mode
     `${mode === "download" ? "attachment" : "inline"}; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
   );
 
-  return new Response(arrayBuffer, { headers });
+  return new Response(selectedArrayBuffer, { headers });
 }

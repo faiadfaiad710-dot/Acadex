@@ -1,14 +1,8 @@
-import { v2 as cloudinary } from "cloudinary";
 import { NextRequest } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
+import { deleteFromGoogleDrive } from "@/lib/google-drive";
 import { FileRecord } from "@/lib/types";
 import { SESSION_COOKIE_NAME } from "@/lib/constants";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
 
 function getSessionCookie(request: NextRequest) {
   return request.cookies.get(SESSION_COOKIE_NAME)?.value ?? null;
@@ -32,6 +26,18 @@ async function requireAdmin(request: NextRequest) {
 }
 
 async function destroyCloudinaryAsset(file: FileRecord) {
+  if (file.resourceType === "drive" && file.publicId) {
+    await deleteFromGoogleDrive(file.publicId);
+    return;
+  }
+
+  const { v2: cloudinary } = await import("cloudinary");
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+
   if (!file.publicId) return;
 
   const candidates = Array.from(

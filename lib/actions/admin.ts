@@ -321,7 +321,12 @@ export async function deleteSubjectAction(formData: FormData) {
   const batch = adminDb.batch();
   batch.delete(adminDb.collection("subjects").doc(id));
   sectionsSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
-  resourcesSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+  resourcesSnapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    const publicId = String(data.publicId || "");
+    const resourceType = String(data.resourceType || "");
+    batch.delete(doc.ref);
+  });
   await batch.commit();
   revalidatePath("/subjects");
   revalidatePath("/dashboard");
@@ -372,6 +377,10 @@ export async function uploadAcademicFileAction(formData: FormData) {
     subjectId,
     subjectName,
     fileUrl: uploaded.secure_url,
+    originalName: file.name || title,
+    publicId: uploaded.public_id,
+    resourceType: "raw",
+    format: file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() || "" : "",
     uploadDate: new Date().toISOString(),
     uploadedBy: admin.email,
     fileType: file.type || "unknown",
@@ -584,7 +593,7 @@ export async function saveSubjectResourceAction(formData: FormData) {
         name: file.name || parsed.name,
         type: "file",
         fileUrl: uploaded.secure_url,
-        publicId: "public_id" in uploaded ? String((uploaded as { public_id?: string }).public_id || "") : "",
+        publicId: uploaded.public_id,
         fileType: file.type || "unknown",
         originalName: file.name || parsed.name,
         format: file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() || "" : "",
@@ -756,9 +765,12 @@ export async function saveExamAction(formData: FormData) {
 
   let subjectName = "General Event";
   if (parsed.kind === "exam") {
+    if (!parsed.subjectId) {
+      throw new Error("Select a subject before saving an exam date.");
+    }
     const subjectDoc = await adminDb.collection("subjects").doc(parsed.subjectId || "").get();
     subjectName = String(subjectDoc.data()?.name || "");
-    if (!subjectName) throw new Error("Invalid subject");
+    if (!subjectName) throw new Error("The selected subject could not be found.");
   }
 
   const payload = {

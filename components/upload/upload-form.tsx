@@ -19,6 +19,7 @@ export function UploadForm({ subjects }: UploadFormProps) {
   const handleUpload = async (formData: FormData) => {
     const res = await fetch("/api/upload", {
       method: "POST",
+      credentials: "same-origin",
       body: formData
     });
 
@@ -71,6 +72,7 @@ export function UploadForm({ subjects }: UploadFormProps) {
 
   return (
     <form
+      encType="multipart/form-data"
       className="mt-6 space-y-4"
       onSubmit={(event) => {
         event.preventDefault();

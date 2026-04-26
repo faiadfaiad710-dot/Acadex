@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAllExams, getAllSubjects } from "@/lib/data";
 import { ExamCalendar } from "@/components/calendar/exam-calendar";
+import { CalendarEntryForm } from "@/components/calendar/calendar-entry-form";
 import { Panel } from "@/components/ui/panel";
 import { formatDate } from "@/lib/utils";
 
@@ -17,26 +18,7 @@ export default async function CalendarPage() {
         <Panel>
           <h2 className="font-heading text-xl font-semibold text-text">Add exam or event date</h2>
           <p className="mt-2 text-sm text-subtle">Admin can publish both exam dates and general event dates for students.</p>
-          <form action={saveExamAction} className="mt-6 space-y-4">
-            <select name="kind" defaultValue="exam" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent">
-              <option value="exam">Exam</option>
-              <option value="event">Event</option>
-            </select>
-            <input name="title" required placeholder="Exam title" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
-            <select name="subjectId" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent">
-              <option value="">General event (no subject)</option>
-              {subjects.map((subject) => (
-                <option key={subject.id} value={subject.id}>
-                  {subject.name} ({subject.code})
-                </option>
-              ))}
-            </select>
-            <input name="examDate" required type="date" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
-            <input name="startTime" type="time" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
-            <input name="room" placeholder="Room or hall" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
-            <textarea name="note" rows={3} placeholder="Extra note" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
-            <button className="w-full rounded-2xl bg-accent px-4 py-3 font-medium text-white transition hover:opacity-90">Save exam</button>
-          </form>
+          <CalendarEntryForm subjects={subjects} action={saveExamAction} />
         </Panel>
       ) : null}
 
@@ -47,22 +29,29 @@ export default async function CalendarPage() {
           <div className="mt-5 grid gap-3">
             {exams.map((exam) => (
               <div key={exam.id} className="rounded-2xl border border-border bg-card p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="font-medium text-text">{exam.title}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-text">{exam.title}</p>
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-subtle">
+                        {(exam.kind || "exam") === "event" ? "Event" : "Exam"}
+                      </span>
+                    </div>
                     <p className="text-sm text-subtle">
                       {(exam.kind || "exam") === "event" ? "General event" : exam.subjectName}
                     </p>
                     {exam.room ? <p className="mt-1 text-sm text-subtle">Room: {exam.room}</p> : null}
                     {exam.note ? <p className="mt-1 text-sm text-subtle">{exam.note}</p> : null}
                   </div>
-                  <div className="text-sm text-subtle">
+                  <div className="flex flex-col items-start gap-2 text-sm text-subtle sm:items-end">
                     <p>{formatDate(exam.examDate)}</p>
                     {exam.startTime ? <p>{exam.startTime}</p> : null}
                     {isAdmin ? (
-                      <form action={deleteExamAction} className="mt-2">
+                      <form action={deleteExamAction}>
                         <input type="hidden" name="id" value={exam.id} />
-                        <button className="font-medium text-danger">Delete</button>
+                        <button className="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs font-semibold text-danger">
+                          Delete {(exam.kind || "exam") === "event" ? "event" : "exam"}
+                        </button>
                       </form>
                     ) : null}
                   </div>

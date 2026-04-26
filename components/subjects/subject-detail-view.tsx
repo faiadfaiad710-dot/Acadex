@@ -92,96 +92,19 @@ const ResourceCreator = memo(function ResourceCreator({
     startTransition(async () => {
       try {
         setMessage("");
-        const signatureResponse = await fetch("/api/cloudinary/signature", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            folder: `academic-files/subjects/${subjectId}`,
-            resourceType: "raw"
-          })
-        });
-
-        if (!signatureResponse.ok) {
-          setMessage(await parseErrorText(signatureResponse));
-          return;
-        }
-
-        const signatureData = (await signatureResponse.json()) as {
-          cloudName: string;
-          apiKey: string;
-          folder: string;
-          resourceType: string;
-          timestamp: number;
-          signature: string;
-        };
-
-        const uploadedFiles: Array<{
-          secureUrl: string;
-          publicId: string;
-          resourceType?: string;
-          format?: string;
-          fileType?: string;
-          originalName?: string;
-          relativePath?: string;
-          fileSize?: number;
-          displayName?: string;
-        }> = [];
-
+        const uploadData = new FormData();
+        uploadData.append("subjectId", subjectId);
+        uploadData.append("sectionId", sectionId);
+        uploadData.append("parentResourceId", parentResourceId || "");
+        uploadData.append("name", displayName);
         for (const file of files) {
-          const cloudinaryData = new FormData();
-          cloudinaryData.append("file", file);
-          cloudinaryData.append("api_key", signatureData.apiKey);
-          cloudinaryData.append("timestamp", String(signatureData.timestamp));
-          cloudinaryData.append("signature", signatureData.signature);
-          cloudinaryData.append("folder", signatureData.folder);
-          cloudinaryData.append("resource_type", signatureData.resourceType);
-
-          const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${signatureData.cloudName}/raw/upload`, {
-            method: "POST",
-            body: cloudinaryData
-          });
-
-          if (!uploadResponse.ok) {
-            setMessage(await parseErrorText(uploadResponse));
-            return;
-          }
-
-          const uploadResult = (await uploadResponse.json()) as {
-            secure_url: string;
-            public_id: string;
-            resource_type?: string;
-            format?: string;
-          };
-
-          uploadedFiles.push({
-            secureUrl: uploadResult.secure_url,
-            publicId: uploadResult.public_id,
-            resourceType: uploadResult.resource_type || "raw",
-            format: uploadResult.format || "",
-            fileType: file.type || "unknown",
-            originalName: file.name,
-            relativePath: (file as File & { webkitRelativePath?: string }).webkitRelativePath || "",
-            fileSize: file.size,
-            displayName: file.name || displayName
-          });
+          uploadData.append("files", file);
         }
 
         const metadataResponse = await fetch("/api/subject-resources", {
           method: "POST",
           credentials: "same-origin",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            subjectId,
-            sectionId,
-            parentResourceId: parentResourceId || "",
-            name: displayName,
-            files: uploadedFiles
-          })
+          body: uploadData
         });
 
         const metadataText = await metadataResponse.text();

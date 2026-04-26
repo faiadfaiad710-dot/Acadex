@@ -1,6 +1,7 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { downloadFromGoogleDrive } from "@/lib/google-drive";
 import { Notice } from "@/lib/types";
 
 const extensionByMime: Record<string, string> = {
@@ -35,6 +36,26 @@ function cloudinaryCandidates(url: string, mode: string) {
   const rawTransformed = cloudinaryUrlForMode(rawUrl, mode);
 
   return Array.from(new Set([url, transformed, rawUrl, rawTransformed]));
+}
+
+function formatSuffix(publicId: string, format?: string) {
+  const cleanFormat = String(format || "").trim().toLowerCase();
+  if (!cleanFormat) return "";
+  return publicId.toLowerCase().endsWith(`.${cleanFormat}`) ? "" : `.${cleanFormat}`;
+}
+
+function publicIdCandidates(notice: Notice, mode: string) {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const publicId = String(notice.publicId || "").trim();
+  if (!cloudName || !publicId) {
+    return [];
+  }
+
+  const resourceType = String(notice.resourceType || "raw").trim() || "raw";
+  const suffix = formatSuffix(publicId, notice.format);
+  const base = `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${publicId}${suffix}`;
+  const transformed = cloudinaryUrlForMode(base, mode);
+  return Array.from(new Set([base, transformed]));
 }
 
 function filenameFromNotice(notice: Notice) {
@@ -142,8 +163,39 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ mode
     return Response.json({ error: "This notice has no file" }, { status: 400 });
   }
 
+  if (notice.resourceType === "drive" && notice.publicId) {
+    const upstream = await downloadFromGoogleDrive(notice.publicId).catch(() => null);
+    if (!upstream?.ok) {
+      return Response.json({ error: "Notice file could not be loaded." }, { status: 502 });
+    }
+
+    const arrayBuffer = await upstream.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const headers = new Headers();
+    const upstreamType = upstream.headers.get("content-type") || "";
+    const contentType =
+      upstreamType && upstreamType !== "application/octet-stream"
+        ? upstreamType
+        : detectMimeFromBytes(bytes) || inferContentType(notice);
+    const filename = filenameWithExtension(filenameFromNotice(notice), contentType);
+    headers.set("Content-Type", contentType);
+    headers.set("Cache-Control", "private, max-age=60");
+    headers.set(
+      "Content-Disposition",
+      `${mode === "download" ? "attachment" : "inline"}; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
+    );
+
+    return new Response(arrayBuffer, { headers });
+  }
+
+  const candidates = Array.from(
+    new Set([
+      ...cloudinaryCandidates(notice.fileUrl, mode),
+      ...publicIdCandidates(notice, mode)
+    ])
+  );
   let upstream: Response | null = null;
-  for (const candidate of cloudinaryCandidates(notice.fileUrl, mode)) {
+  for (const candidate of candidates) {
     const response = await fetch(candidate, { cache: "no-store" }).catch(() => null);
     if (response?.ok && response.body) {
       upstream = response;
@@ -152,6 +204,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ mode
   }
 
   if (!upstream?.ok || !upstream.body) {
+    const fallback = candidates[0];
+    if (fallback) {
+      return NextResponse.redirect(fallback, { status: 307 });
+    }
     return Response.json({ error: "Notice file could not be loaded." }, { status: 502 });
   }
 
