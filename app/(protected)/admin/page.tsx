@@ -3,12 +3,12 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { Panel } from "@/components/ui/panel";
 import { createUserAction, deleteUserAction } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/guards";
-import { getAdminStats, getAllUsers } from "@/lib/data";
+import { getAdminReadingInsight, getAdminStats, getAllUsers } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
 export default async function AdminPage() {
   const currentAdmin = await requireAdmin();
-  const [stats, users] = await Promise.all([getAdminStats(), getAllUsers()]);
+  const [stats, users, readingInsight] = await Promise.all([getAdminStats(), getAllUsers(), getAdminReadingInsight()]);
 
   return (
     <div className="space-y-5">
@@ -16,6 +16,26 @@ export default async function AdminPage() {
         <StatCard label="Total files" value={stats.totalFiles} helper="All uploaded academic files" />
         <StatCard label="Total subjects" value={stats.totalSubjects} helper="Subjects available for assignment" />
         <StatCard label="Total users" value={stats.totalUsers} helper="Admin and student accounts" />
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
+        <BarChart title="Popular subjects this month" data={readingInsight.popularSubjects} />
+        <Panel>
+          <h3 className="font-heading text-lg font-semibold text-text">Most active readers</h3>
+          <div className="mt-4 space-y-3">
+            {readingInsight.userReads.slice(0, 5).map((reader) => (
+              <div key={reader.uid} className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium text-text">{reader.userLabel}</p>
+                  <span className="text-xs text-subtle">{reader.totalReads} reads</span>
+                </div>
+                <p className="mt-2 text-sm text-subtle">Top subject: {reader.topSubjectName}</p>
+                <p className="mt-1 text-sm text-subtle">Last entered: {reader.lastSubjectName}</p>
+                <p className="mt-2 text-xs text-subtle">{reader.lastEnteredAt ? formatDate(reader.lastEnteredAt) : "-"}</p>
+              </div>
+            ))}
+          </div>
+        </Panel>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_420px]">

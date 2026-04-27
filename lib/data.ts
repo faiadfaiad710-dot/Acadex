@@ -1,9 +1,12 @@
 import {
+  ActivityLog,
+  AdminReadingInsight,
   DashboardStats,
   ExamEvent,
   FileRecord,
   LabRecord,
   Notice,
+  StudentReadingInsight,
   Semester,
   Subject,
   SubjectResource,
@@ -11,7 +14,7 @@ import {
   Teacher,
   UserProfile
 } from "@/lib/types";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 
 function serializeFirestoreValue(value: unknown): unknown {
   if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
@@ -170,6 +173,17 @@ export async function getAllSubjectResources() {
   }
 }
 
+export async function getAllActivityLogs() {
+  const adminDb = getAdminDb();
+  try {
+    const snapshot = await adminDb.collection("activityLogs").orderBy("createdAt", "desc").get();
+    return snapshot.docs.map((doc) => normalize<ActivityLog>(doc.id, doc.data()));
+  } catch (error) {
+    console.error("Failed to load activity logs", error);
+    return [];
+  }
+}
+
 export async function getAdminStats(): Promise<DashboardStats> {
   const [files, subjects, users] = await Promise.all([getAllFiles(), getAllSubjects(), getAllUsers()]);
   const filesPerSubject = subjects.map((subject) => ({
@@ -190,6 +204,104 @@ function toMs(value?: string) {
   if (!value) return 0;
   const time = new Date(value).getTime();
   return Number.isFinite(time) ? time : 0;
+}
+
+function identifierFromEmail(email?: string) {
+  const value = String(email || "").trim().toLowerCase();
+  if (value.endsWith("@phone.academic.local")) {
+    const identifier = value.replace("@phone.academic.local", "");
+    return identifier.startsWith("plus") ? `+${identifier.slice(4)}` : identifier;
+  }
+  return "";
+}
+
+function isCurrentMonth(value?: string) {
+  if (!value) return false;
+  const date = new Date(value);
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+}
+
+function rankSubjects(logs: ActivityLog[]) {
+  const counts = new Map<string, number>();
+  logs.forEach((log) => {
+    const key = log.subjectName || "Unknown subject";
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  return Array.from(counts.entries())
+    .map(([subject, total]) => ({ subject, total }))
+    .sort((a, b) => b.total - a.total || a.subject.localeCompare(b.subject));
+}
+
+export async function getStudentReadingInsight(uid: string): Promise<StudentReadingInsight> {
+  const logs = (await getAllActivityLogs()).filter((log) => log.uid === uid && isCurrentMonth(log.createdAt));
+  const monthlyReads = rankSubjects(logs);
+  const favorite = monthlyReads[0];
+
+  return {
+    favoriteSubjectName: favorite?.subject || "No subject yet",
+    favoriteSubjectCount: favorite?.total || 0,
+    monthlyReads: monthlyReads.slice(0, 6)
+  };
+}
+
+export async function getAdminReadingInsight(): Promise<AdminReadingInsight> {
+  const [logs, profiles] = await Promise.all([getAllActivityLogs(), getAllUsers()]);
+  const profileByUid = new Map(profiles.map((profile) => [profile.uid, profile]));
+  const popularSubjects = rankSubjects(
+    logs.filter((log) => isCurrentMonth(log.createdAt) && (log.action === "file_open" || log.action === "file_download"))
+  ).slice(0, 6);
+
+  const users = new Map<string, ActivityLog[]>();
+  logs.forEach((log) => {
+    const current = users.get(log.uid);
+    if (current) {
+      current.push(log);
+    } else {
+      users.set(log.uid, [log]);
+    }
+  });
+
+  const userReads = await Promise.all(
+    Array.from(users.entries()).map(async ([uid, items]) => {
+      const sorted = [...items].sort((a, b) => toMs(b.createdAt) - toMs(a.createdAt));
+      const topSubject = rankSubjects(items.filter((item) => isCurrentMonth(item.createdAt)))[0];
+      const lastSubject = sorted.find((item) => Boolean(item.subjectName));
+      const profile = profileByUid.get(uid);
+      let resolvedLabel =
+        profile?.loginId ||
+        profile?.phone ||
+        identifierFromEmail(profile?.email) ||
+        sorted[0]?.userLabel ||
+        uid;
+
+      if (resolvedLabel === uid) {
+        const authUser = await getAdminAuth().getUser(uid).catch(() => null);
+        const authIdentifier =
+          identifierFromEmail(authUser?.email) ||
+          authUser?.phoneNumber ||
+          "";
+        if (authIdentifier) {
+          resolvedLabel = authIdentifier;
+        }
+      }
+
+      return {
+        uid,
+        userLabel: resolvedLabel,
+        topSubjectName: topSubject?.subject || "No subject yet",
+        totalReads: items.filter((item) => item.action === "subject_enter" || item.action === "file_open" || item.action === "file_download").length,
+        lastSubjectName: lastSubject?.subjectName || "No subject yet",
+        lastEnteredAt: lastSubject?.createdAt || ""
+      };
+    })
+  );
+
+  return {
+    popularSubjects,
+    userReads: userReads.sort((a, b) => b.totalReads - a.totalReads || toMs(b.lastEnteredAt) - toMs(a.lastEnteredAt))
+  };
 }
 
 export async function getUnreadNotificationCount(lastSeenAt?: string) {

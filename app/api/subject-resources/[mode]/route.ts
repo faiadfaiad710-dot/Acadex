@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { recordSubjectActivity } from "@/lib/activity";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { downloadFromGoogleDrive } from "@/lib/google-drive";
@@ -163,6 +164,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ mode
   if (resource.type !== "file" || !resource.fileUrl) {
     return Response.json({ error: "This resource is not a file" }, { status: 400 });
   }
+
+  const subjectDoc = await getAdminDb().collection("subjects").doc(resource.subjectId).get();
+  const subjectName = String(subjectDoc.data()?.name || "");
+  await recordSubjectActivity({
+    user,
+    subjectId: resource.subjectId,
+    subjectName,
+    action: mode === "download" ? "file_download" : "file_open",
+    itemId: resource.id,
+    itemType: "resource"
+  });
 
   if (resource.resourceType === "drive" && resource.publicId) {
     const upstream = await downloadFromGoogleDrive(resource.publicId).catch(() => null);

@@ -5,6 +5,7 @@ import {
   saveSubjectResourceAction,
   saveSubjectSectionAction
 } from "@/lib/actions/admin";
+import { recordSubjectActivity } from "@/lib/activity";
 import { requireUser } from "@/lib/auth/guards";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAllFiles, getAllSubjectResources, getAllSubjectSections, getAllSubjects, getAllTeachers } from "@/lib/data";
@@ -38,6 +39,15 @@ export default async function SubjectDetailPage({
   const subject = subjects.find((item) => item.id === id);
   if (!subject) {
     return <div className="rounded-[28px] border border-border bg-card p-6 text-sm text-subtle">Subject not found.</div>;
+  }
+
+  if (user) {
+    await recordSubjectActivity({
+      user,
+      subjectId: subject.id,
+      subjectName: subject.name,
+      action: "subject_enter"
+    });
   }
 
   return (

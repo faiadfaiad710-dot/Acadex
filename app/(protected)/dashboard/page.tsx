@@ -1,14 +1,18 @@
 import Link from "next/link";
 import {
+  getAdminReadingInsight,
   getAllExams,
   getAllFiles,
   getAllNotices,
   getAllSubjects,
   getAllLabs,
+  getStudentReadingInsight,
   getAllTeachers,
   getAllSubjectResources
 } from "@/lib/data";
 import { requireUser } from "@/lib/auth/guards";
+import { getCurrentUser } from "@/lib/auth/session";
+import { BarChart } from "@/components/dashboard/bar-chart";
 import { SearchPanel } from "@/components/dashboard/search-panel";
 import { ExamCalendar } from "@/components/calendar/exam-calendar";
 import { Panel } from "@/components/ui/panel";
@@ -17,7 +21,8 @@ import { formatDate, getNoticeDownloadHref } from "@/lib/utils";
 
 export default async function DashboardPage() {
   await requireUser();
-  const [files, subjects, notices, labs, teachers, exams, subjectResources] = await Promise.all([
+  const [user, files, subjects, notices, labs, teachers, exams, subjectResources] = await Promise.all([
+    getCurrentUser(),
     getAllFiles(),
     getAllSubjects(),
     getAllNotices(),
@@ -25,6 +30,10 @@ export default async function DashboardPage() {
     getAllTeachers(),
     getAllExams(),
     getAllSubjectResources()
+  ]);
+  const [studentInsight, adminInsight] = await Promise.all([
+    user ? getStudentReadingInsight(user.uid) : Promise.resolve({ favoriteSubjectName: "No subject yet", favoriteSubjectCount: 0, monthlyReads: [] }),
+    user?.role === "admin" ? getAdminReadingInsight() : Promise.resolve(null)
   ]);
 
   function isPdfEntry(entry: {
@@ -62,12 +71,52 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Subjects" value={subjects.length} helper="Available course boxes" />
         <StatCard label="Total files" value={files.length + subjectResources.filter((resource) => resource.type === "file").length} helper="Website files and subject files" />
         <StatCard label="PDF uploaded" value={totalPdfCount} helper="PDF files across the website" />
         <StatCard label="Notices" value={notices.length} helper="Latest academic notices" />
+        <StatCard label="Most read this month" value={studentInsight.favoriteSubjectName} helper={`${studentInsight.favoriteSubjectCount} reading activity this month`} />
       </div>
+
+      <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
+        <BarChart title="Your subject reading this month" data={studentInsight.monthlyReads} />
+        {user?.role === "admin" && adminInsight ? (
+          <BarChart title="Most opened subjects this month" data={adminInsight.popularSubjects} />
+        ) : (
+          <Panel>
+            <h3 className="font-heading text-lg font-semibold text-text">Reading focus</h3>
+            <p className="mt-2 text-sm text-subtle">Acadex tracks which subjects you open and read most often this month.</p>
+            <div className="mt-5 space-y-3">
+              {studentInsight.monthlyReads.slice(0, 4).map((item) => (
+                <div key={item.subject} className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3">
+                  <span className="text-sm font-medium text-text">{item.subject}</span>
+                  <span className="text-sm text-subtle">{item.total}</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        )}
+      </div>
+
+      {user?.role === "admin" && adminInsight ? (
+        <Panel>
+          <h3 className="font-heading text-lg font-semibold text-text">User reading activity</h3>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            {adminInsight.userReads.slice(0, 8).map((reader) => (
+              <div key={reader.uid} className="rounded-2xl border border-border bg-card p-4">
+                <p className="font-medium text-text">{reader.userLabel}</p>
+                <p className="mt-2 text-sm text-subtle">Top subject this month: {reader.topSubjectName}</p>
+                <p className="mt-1 text-sm text-subtle">Last entered: {reader.lastSubjectName}</p>
+                <div className="mt-3 flex items-center justify-between text-xs text-subtle">
+                  <span>{reader.totalReads} reading actions</span>
+                  <span>{reader.lastEnteredAt ? formatDate(reader.lastEnteredAt) : "-"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
 
       <section id="calendar">
         <ExamCalendar exams={exams} />

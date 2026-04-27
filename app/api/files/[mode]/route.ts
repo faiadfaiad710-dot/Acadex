@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { recordSubjectActivity } from "@/lib/activity";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { downloadFromGoogleDrive } from "@/lib/google-drive";
@@ -157,6 +158,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ mode
   }
 
   const file = { id: fileDoc.id, ...fileDoc.data() } as FileRecord;
+  await recordSubjectActivity({
+    user,
+    subjectId: file.subjectId,
+    subjectName: file.subjectName,
+    action: mode === "download" ? "file_download" : "file_open",
+    itemId: file.id,
+    itemType: "file"
+  });
+
   if (file.resourceType === "drive" && file.publicId) {
     const upstream = await downloadFromGoogleDrive(file.publicId).catch(() => null);
     if (!upstream?.ok) {

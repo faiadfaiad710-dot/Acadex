@@ -124,3 +124,33 @@ export interface DashboardStats {
   filesPerSubject: { subject: string; total: number }[];
   recentUploads: FileRecord[];
 }
+
+export interface ActivityLog {
+  id: string;
+  uid: string;
+  userLabel: string;
+  subjectId: string;
+  subjectName: string;
+  action: "subject_enter" | "file_open" | "file_download";
+  itemId?: string;
+  itemType?: "file" | "resource";
+  createdAt: string;
+}
+
+export interface StudentReadingInsight {
+  favoriteSubjectName: string;
+  favoriteSubjectCount: number;
+  monthlyReads: { subject: string; total: number }[];
+}
+
+export interface AdminReadingInsight {
+  popularSubjects: { subject: string; total: number }[];
+  userReads: Array<{
+    uid: string;
+    userLabel: string;
+    topSubjectName: string;
+    totalReads: number;
+    lastSubjectName: string;
+    lastEnteredAt: string;
+  }>;
+}
