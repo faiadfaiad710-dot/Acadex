@@ -21,7 +21,7 @@ const AppContext = createContext<{
   setLanguage: () => undefined,
   theme: "scholar",
   setTheme: () => undefined,
-  surfaceMode: "light",
+  surfaceMode: "dark",
   setSurfaceMode: () => undefined,
   dictionary: en
 });
@@ -29,7 +29,7 @@ const AppContext = createContext<{
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>("en");
   const [theme, setTheme] = useState<ThemeName>("scholar");
-  const [surfaceMode, setSurfaceMode] = useState<SurfaceMode>("light");
+  const [surfaceMode, setSurfaceMode] = useState<SurfaceMode>("dark");
 
   useEffect(() => {
     const root = document.documentElement;

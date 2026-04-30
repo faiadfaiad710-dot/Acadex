@@ -14,6 +14,8 @@ const config: Config = {
         card: "var(--color-card)",
         muted: "var(--color-muted)",
         border: "var(--color-border)",
+        glass: "rgba(255,255,255,0.08)",
+        "glass-border": "rgba(255,255,255,0.15)",
         text: "var(--color-text)",
         subtle: "var(--color-subtle)",
         accent: "var(--color-accent)",
@@ -25,9 +27,9 @@ const config: Config = {
         card: "0 20px 60px rgba(15, 23, 42, 0.12)"
       },
       fontFamily: {
-        heading: ["var(--font-heading)"],
-        body: ["var(--font-body)"],
-        bangla: ["var(--font-bangla)"]
+        heading: ["var(--font-brand)", "var(--font-bangla)", "sans-serif"],
+        body: ["var(--font-brand)", "var(--font-bangla)", "sans-serif"],
+        bangla: ["var(--font-brand)", "var(--font-bangla)", "sans-serif"]
       },
       backgroundImage: {
         "soft-grid":

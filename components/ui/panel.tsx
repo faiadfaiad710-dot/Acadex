@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { GlassCard } from "@/components/ui/glass-card";
 
 export function Panel({
   className,
@@ -7,9 +8,5 @@ export function Panel({
   className?: string;
   children: React.ReactNode;
 }) {
-  return (
-    <div className={cn("glass-card rounded-[28px] border border-border/70 p-5 shadow-card", className)}>
-      {children}
-    </div>
-  );
+  return <GlassCard className={cn("p-5", className)}>{children}</GlassCard>;
 }

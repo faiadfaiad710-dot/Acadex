@@ -162,7 +162,7 @@ export async function createUserAction(formData: FormData) {
   const directEmail = String(parsed.email || "").trim().toLowerCase();
   const loginEmail = directEmail || phoneToLoginEmail(phone);
   if (!loginEmail || !phone) {
-    throw new Error("A valid phone number is required.");
+    throw new Error("A valid roll number is required.");
   }
 
   const existingUser = await adminAuth.getUserByEmail(loginEmail).catch(() => null);

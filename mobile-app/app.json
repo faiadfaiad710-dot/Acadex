@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Acadex",
+    "slug": "acadex",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "acadex",
+    "android": {
+      "package": "com.acadex.portal",
+      "adaptiveIcon": {
+        "backgroundColor": "#020617"
+      },
+      "permissions": [
+        "INTERNET"
+      ]
+    },
+    "extra": {
+      "acadexUrl": "https://acadex-one-beta.vercel.app",
+      "eas": {
+        "projectId": "7bcc1bf9-d88a-4cd0-a01c-39d9ab375602"
+      }
+    },
+    "owner": "fahim0723"
+  }
+}

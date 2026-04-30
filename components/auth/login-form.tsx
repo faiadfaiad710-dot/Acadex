@@ -17,9 +17,10 @@ export function LoginForm() {
 
   return (
     <motion.form
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0.98, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card w-full max-w-md rounded-[32px] border border-border/70 p-8 shadow-card"
+      transition={{ duration: 0.12 }}
+      className="glass-card w-full max-w-md rounded-[32px] border border-border/70 p-5 shadow-card sm:p-8"
       onSubmit={(event) => {
         event.preventDefault();
         setError("");
@@ -31,7 +32,7 @@ export function LoginForm() {
           try {
             const firebaseAuth = getFirebaseAuth();
             const email = credentialToEmail(loginId);
-            if (!email) throw new Error("Enter a valid phone number or email.");
+            if (!email) throw new Error("Enter a valid roll number or email.");
             const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
             const token = await credential.user.getIdToken(true);
             await signInWithTokenAction(token);
@@ -49,16 +50,16 @@ export function LoginForm() {
       </div>
       <div className="mt-6 space-y-4">
         <div>
-          <label className="mb-2 block text-sm font-medium text-text">Phone number</label>
+          <label className="mb-2 block text-sm font-medium text-text">Roll number</label>
           <input
             name="loginId"
             type="text"
             inputMode="numeric"
-            placeholder="01XXXXXXXXX"
+            placeholder="Enter your roll number"
             required
             className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none transition focus:border-accent"
           />
-          <p className="mt-2 text-xs text-subtle">Acadex automatically signs in as `your-number@phone.academic.local`.</p>
+          <p className="mt-2 text-xs text-subtle">Acadex automatically signs in with your roll number.</p>
         </div>
         <div>
           <label className="mb-2 block text-sm font-medium text-text">{dictionary.password}</label>

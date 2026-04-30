@@ -3,40 +3,48 @@
 @tailwind utilities;
 
 :root {
-  --color-base: #eef3ff;
-  --color-card: #ffffff;
-  --color-muted: #dfe7fb;
-  --color-border: #c2d1f5;
-  --color-text: #0f1b3d;
-  --color-subtle: #516089;
+  --color-base: #020617;
+  --color-card: rgba(255, 255, 255, 0.08);
+  --color-muted: rgba(255, 255, 255, 0.12);
+  --color-border: rgba(255, 255, 255, 0.15);
+  --color-text: #f8fafc;
+  --color-subtle: #cbd5e1;
   --color-accent: #315efb;
   --color-accent-soft: #d8e2ff;
   --color-success: #0f9d7a;
   --color-danger: #d14343;
-  --font-heading: "Space Grotesk";
+  --font-heading: "Comfortaa";
   --font-brand: "Comfortaa";
-  --font-body: "Plus Jakarta Sans";
-  --font-bangla: "Hind Siliguri";
+  --font-body: "Comfortaa";
+  --font-bangla: "Comfortaa", "Hind Siliguri";
 }
 
 html {
-  background: var(--color-base);
+  background: linear-gradient(135deg, #0f172a, #1e293b, #020617);
 }
 
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--color-accent-soft) 90%, transparent) 0, transparent 28%),
-    radial-gradient(circle at 85% 10%, color-mix(in srgb, var(--color-accent) 24%, transparent) 0, transparent 24%),
-    radial-gradient(circle at 50% 95%, color-mix(in srgb, var(--color-success) 18%, transparent) 0, transparent 30%),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-base) 94%, white) 0%, var(--color-base) 100%);
+    radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--color-accent) 18%, transparent) 0, transparent 24%),
+    radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.08) 0, transparent 20%),
+    radial-gradient(circle at 50% 98%, color-mix(in srgb, var(--color-success) 14%, transparent) 0, transparent 28%),
+    linear-gradient(135deg, #0f172a, #1e293b, #020617);
   color: var(--color-text);
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-brand), var(--font-bangla), sans-serif;
   background-size: 180% 180%, 150% 150%, 160% 160%, cover;
 }
 
 [data-language="bn"] body {
-  font-family: var(--font-bangla), sans-serif;
+  font-family: var(--font-brand), var(--font-bangla), sans-serif;
+}
+
+button,
+input,
+select,
+textarea,
+label {
+  font-family: var(--font-brand), var(--font-bangla), sans-serif;
 }
 
 * {
@@ -44,18 +52,34 @@ body {
 }
 
 .glass-card {
-  background: color-mix(in srgb, var(--color-card) 90%, transparent);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
 }
 
+.sidebar-glass {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06)),
+    rgba(2, 6, 23, 0.34);
+  backdrop-filter: blur(34px) saturate(165%);
+  -webkit-backdrop-filter: blur(34px) saturate(165%);
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
 [data-surface="dark"] .glass-card,
 [data-surface="black"] .glass-card {
-  background: color-mix(in srgb, var(--color-card) 92%, transparent);
+  background: rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 16px 44px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 [data-surface="light"] body {
@@ -84,7 +108,51 @@ body {
 [data-surface="dark"] .bg-muted,
 [data-surface="black"] .bg-card,
 [data-surface="black"] .bg-muted {
-  background: color-mix(in srgb, var(--color-card) 96%, transparent) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.bg-card {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.bg-muted {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+input,
+select,
+textarea {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: var(--color-text);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(226, 232, 240, 0.62);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+button.bg-accent,
+a.bg-accent,
+button.bg-text,
+a.bg-text {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+}
+
+button.bg-accent:hover,
+a.bg-accent:hover,
+button.bg-text:hover,
+a.bg-text:hover {
+  box-shadow: 0 0 26px color-mix(in srgb, var(--color-accent) 38%, transparent);
 }
 
 .soft-grid {
@@ -256,6 +324,13 @@ a.bg-text {
   }
 }
 
+@media (max-width: 640px) {
+  .glass-card {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
 [data-performance="lite"] body,
 [data-performance="lite"] .brand-gradient,
 [data-performance="lite"] .animated-aurora,
@@ -269,6 +344,7 @@ a.bg-text {
 }
 
 [data-performance="lite"] .glass-card,
+[data-performance="lite"] .glass-card:not(.sidebar-glass),
 [data-performance="lite"] .bg-card,
 [data-performance="lite"] .bg-muted,
 [data-performance="lite"] input,
@@ -277,6 +353,11 @@ a.bg-text {
 [data-performance="lite"] a,
 [data-performance="lite"] button {
   backdrop-filter: none !important;
+}
+
+[data-performance="lite"] .sidebar-glass {
+  backdrop-filter: blur(20px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(135%) !important;
 }
 
 [data-performance="lite"] .interactive-lift,

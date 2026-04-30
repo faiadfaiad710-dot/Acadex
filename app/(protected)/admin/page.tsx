@@ -44,7 +44,7 @@ export default async function AdminPage() {
           <h3 className="font-heading text-lg font-semibold text-text">Create user</h3>
           <p className="mt-2 text-sm text-subtle">Create users here so Acadex updates both Firebase Authentication and the Firestore users collection automatically.</p>
           <form action={createUserAction} className="mt-4 space-y-4">
-            <input name="phone" type="tel" placeholder="Student phone number" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
+            <input name="phone" type="text" inputMode="numeric" placeholder="Student roll number" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
             <input name="email" type="email" placeholder="Admin email only if creating admin" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
             <input name="password" type="text" placeholder="Temporary password" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
             <select name="role" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent">

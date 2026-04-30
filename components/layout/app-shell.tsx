@@ -41,6 +41,9 @@ function getRouteTitle(pathname: string, role: UserRole) {
   if (pathname.startsWith("/profile")) {
     return { title: "Profile", subtitle: "Update your password and account settings." };
   }
+  if (pathname.startsWith("/settings")) {
+    return { title: "Settings", subtitle: "Manage your profile and Acadex theme." };
+  }
   return {
     title: role === "admin" ? "Admin Dashboard" : "Student Dashboard",
     subtitle: role === "admin" ? "Manage the platform from one place." : "Welcome to your Acadex workspace."
@@ -108,7 +111,7 @@ export function AppShell({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.12 }}
-              className="fixed inset-0 z-40 bg-slate-950/40"
+              className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm"
               onClick={() => setOpen(false)}
             />
             <motion.div

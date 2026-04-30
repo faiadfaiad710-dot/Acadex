@@ -135,7 +135,7 @@ export async function getAllUsers() {
   const adminDb = getAdminDb();
   try {
     const snapshot = await adminDb.collection("users").orderBy("email").get();
-    return snapshot.docs.map((doc) => doc.data() as UserProfile);
+    return snapshot.docs.map((doc) => ({ uid: doc.id, ...(serializeFirestoreValue(doc.data()) as Record<string, unknown>) }) as UserProfile);
   } catch (error) {
     console.error("Failed to load users", error);
     return [];
