@@ -80,6 +80,7 @@ const routineSchema = z.object({
   startTime: z.string().min(1),
   endTime: z.string().optional(),
   room: z.string().optional(),
+  teacherId: z.string().optional(),
   teacherName: z.string().optional(),
   note: z.string().optional()
 });
@@ -829,13 +830,18 @@ export async function saveClassRoutineAction(formData: FormData) {
     startTime: formData.get("startTime"),
     endTime: formData.get("endTime") || "",
     room: formData.get("room") || "",
+    teacherId: formData.get("teacherId") || "",
     teacherName: formData.get("teacherName") || "",
     note: formData.get("note") || ""
   });
 
-  const subjectDoc = await adminDb.collection("subjects").doc(parsed.subjectId).get();
+  const [subjectDoc, teacherDoc] = await Promise.all([
+    adminDb.collection("subjects").doc(parsed.subjectId).get(),
+    parsed.teacherId ? adminDb.collection("teachers").doc(parsed.teacherId).get() : Promise.resolve(null)
+  ]);
   const subjectName = String(subjectDoc.data()?.name || "");
   if (!subjectName) throw new Error("Select a valid subject.");
+  const teacherName = String(teacherDoc?.data()?.name || parsed.teacherName || "");
 
   const payload = {
     subjectId: parsed.subjectId,
@@ -844,7 +850,8 @@ export async function saveClassRoutineAction(formData: FormData) {
     startTime: parsed.startTime,
     endTime: parsed.endTime || "",
     room: parsed.room || "",
-    teacherName: parsed.teacherName || "",
+    teacherId: parsed.teacherId || "",
+    teacherName,
     note: parsed.note || ""
   };
 

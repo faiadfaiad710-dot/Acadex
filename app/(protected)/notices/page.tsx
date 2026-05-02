@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { deleteNoticeAction, saveNoticeAction } from "@/lib/actions/admin";
+import { deleteNoticeAction } from "@/lib/actions/admin";
 import { getCurrentUser } from "@/lib/auth/session";
 import { requireUser } from "@/lib/auth/guards";
 import { getAllNotices } from "@/lib/data";
 import { Panel } from "@/components/ui/panel";
 import { formatDate, getNoticeDownloadHref } from "@/lib/utils";
+import { NoticeForm } from "@/components/notices/notice-form";
 
 export default async function NoticesPage() {
   await requireUser();
@@ -16,16 +17,7 @@ export default async function NoticesPage() {
       {isAdmin ? (
         <Panel>
           <h2 className="font-heading text-xl font-semibold text-text">Post notice</h2>
-          <form action={saveNoticeAction} className="mt-6 space-y-4">
-            <textarea
-              name="text"
-              placeholder="Notice text (optional if a file is uploaded)"
-              rows={5}
-              className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent"
-            />
-            <input name="file" type="file" className="w-full rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm" />
-            <button className="w-full rounded-2xl bg-accent px-4 py-3 font-medium text-white transition hover:opacity-90">Publish notice</button>
-          </form>
+          <NoticeForm />
         </Panel>
       ) : null}
 

@@ -103,6 +103,90 @@ export const THEMES: Record<
       "--color-success": "#4ad8a7",
       "--color-danger": "#ff7b7b"
     }
+  },
+  palette01: {
+    label: "Palette 01",
+    colors: {
+      "--color-accent": "#22577A",
+      "--color-accent-soft": "#C7F9CC",
+      "--color-success": "#57CC99",
+      "--color-danger": "#d14343",
+      "--palette-a": "#22577A",
+      "--palette-b": "#38A3A5",
+      "--palette-c": "#57CC99",
+      "--palette-d": "#80ED99",
+      "--palette-e": "#C7F9CC"
+    }
+  },
+  palette02: {
+    label: "Palette 02",
+    colors: {
+      "--color-accent": "#C9184A",
+      "--color-accent-soft": "#FFB3C1",
+      "--color-success": "#FF758F",
+      "--color-danger": "#800F2F",
+      "--palette-a": "#800F2F",
+      "--palette-b": "#C9184A",
+      "--palette-c": "#FF4D6D",
+      "--palette-d": "#FF758F",
+      "--palette-e": "#FFB3C1"
+    }
+  },
+  palette03: {
+    label: "Palette 03",
+    colors: {
+      "--color-accent": "#E2711D",
+      "--color-accent-soft": "#FFC971",
+      "--color-success": "#FFB627",
+      "--color-danger": "#CC5803",
+      "--palette-a": "#CC5803",
+      "--palette-b": "#E2711D",
+      "--palette-c": "#FF9505",
+      "--palette-d": "#FFB627",
+      "--palette-e": "#FFC971"
+    }
+  },
+  palette04: {
+    label: "Palette 04",
+    colors: {
+      "--color-accent": "#967AA1",
+      "--color-accent-soft": "#F5E6E8",
+      "--color-success": "#AAA1C8",
+      "--color-danger": "#8b3154",
+      "--palette-a": "#192A51",
+      "--palette-b": "#967AA1",
+      "--palette-c": "#AAA1C8",
+      "--palette-d": "#D5C6E0",
+      "--palette-e": "#F5E6E8"
+    }
+  },
+  palette05: {
+    label: "Palette 05",
+    colors: {
+      "--color-accent": "#99582A",
+      "--color-accent-soft": "#FFE6A7",
+      "--color-success": "#BB9457",
+      "--color-danger": "#6F1D1B",
+      "--palette-a": "#6F1D1B",
+      "--palette-b": "#BB9457",
+      "--palette-c": "#432818",
+      "--palette-d": "#99582A",
+      "--palette-e": "#FFE6A7"
+    }
+  },
+  palette06: {
+    label: "Palette 06",
+    colors: {
+      "--color-accent": "#8E9AAF",
+      "--color-accent-soft": "#FEEAFA",
+      "--color-success": "#CBC0D3",
+      "--color-danger": "#b4235c",
+      "--palette-a": "#8E9AAF",
+      "--palette-b": "#CBC0D3",
+      "--palette-c": "#EFD3D7",
+      "--palette-d": "#FEEAFA",
+      "--palette-e": "#DEE2FF"
+    }
   }
 };
 

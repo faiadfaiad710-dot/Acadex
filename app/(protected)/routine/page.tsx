@@ -1,8 +1,8 @@
-import { Clock, MapPin, Trash2, UserRound } from "lucide-react";
+import { Clock, MapPin, Pencil, Trash2, UserRound } from "lucide-react";
 import { deleteClassRoutineAction, saveClassRoutineAction } from "@/lib/actions/admin";
 import { requireUser } from "@/lib/auth/guards";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAllClassRoutines, getAllSubjects } from "@/lib/data";
+import { getAllClassRoutines, getAllSubjects, getAllTeachers } from "@/lib/data";
 import { Panel } from "@/components/ui/panel";
 import { RoutineForm } from "@/components/routine/routine-form";
 import { ClassRoutine } from "@/lib/types";
@@ -19,7 +19,7 @@ const days: Array<[ClassRoutine["day"], string]> = [
 
 export default async function RoutinePage() {
   await requireUser();
-  const [user, subjects, routines] = await Promise.all([getCurrentUser(), getAllSubjects(), getAllClassRoutines()]);
+  const [user, subjects, routines, teachers] = await Promise.all([getCurrentUser(), getAllSubjects(), getAllClassRoutines(), getAllTeachers()]);
   const isAdmin = user?.role === "admin";
 
   return (
@@ -28,7 +28,7 @@ export default async function RoutinePage() {
         <Panel>
           <h2 className="font-heading text-xl font-semibold text-text">Add class routine</h2>
           <p className="mt-2 text-sm text-subtle">Add classes by subject, day, time, room, and teacher.</p>
-          <RoutineForm subjects={subjects} action={saveClassRoutineAction} />
+          <RoutineForm subjects={subjects} teachers={teachers} action={saveClassRoutineAction} />
         </Panel>
       ) : null}
 
@@ -67,14 +67,25 @@ export default async function RoutinePage() {
                             {routine.note ? <p className="mt-2 text-sm text-subtle">{routine.note}</p> : null}
                           </div>
                           {isAdmin ? (
-                            <form action={deleteClassRoutineAction}>
-                              <input type="hidden" name="id" value={routine.id} />
-                              <button className="rounded-xl border border-danger/30 bg-danger/10 p-2 text-danger" aria-label="Delete class">
-                                <Trash2 className="size-4" />
-                              </button>
-                            </form>
+                            <div className="flex items-center gap-2">
+                              <a href={`#edit-${routine.id}`} className="rounded-xl border border-border bg-card p-2 text-text" aria-label="Edit class">
+                                <Pencil className="size-4" />
+                              </a>
+                              <form action={deleteClassRoutineAction}>
+                                <input type="hidden" name="id" value={routine.id} />
+                                <button className="rounded-xl border border-danger/30 bg-danger/10 p-2 text-danger" aria-label="Delete class">
+                                  <Trash2 className="size-4" />
+                                </button>
+                              </form>
+                            </div>
                           ) : null}
                         </div>
+                        {isAdmin ? (
+                          <details id={`edit-${routine.id}`} className="mt-4 rounded-2xl border border-border bg-card p-3">
+                            <summary className="cursor-pointer text-sm font-semibold text-text">Update this class</summary>
+                            <RoutineForm subjects={subjects} teachers={teachers} routine={routine} action={saveClassRoutineAction} compact />
+                          </details>
+                        ) : null}
                       </div>
                     ))
                   ) : (

@@ -1,6 +1,17 @@
 export type UserRole = "admin" | "user";
 export type Language = "en" | "bn";
-export type ThemeName = "aurora" | "scholar" | "sunrise" | "emerald" | "midnight";
+export type ThemeName =
+  | "aurora"
+  | "scholar"
+  | "sunrise"
+  | "emerald"
+  | "midnight"
+  | "palette01"
+  | "palette02"
+  | "palette03"
+  | "palette04"
+  | "palette05"
+  | "palette06";
 export type SurfaceMode = "light" | "dark" | "black";
 
 export interface UserProfile {
@@ -125,6 +136,7 @@ export interface ClassRoutine {
   startTime: string;
   endTime?: string;
   room?: string;
+  teacherId?: string;
   teacherName?: string;
   note?: string;
   createdAt?: string;

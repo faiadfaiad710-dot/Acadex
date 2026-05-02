@@ -83,7 +83,10 @@ export default function SettingsPage() {
               >
                 <span className="text-sm font-semibold">{value.label}</span>
                 <span className="mt-4 flex gap-2">
-                  {Object.entries(value.colors).slice(0, 3).map(([token, color]) => (
+                  {Object.entries(value.colors)
+                    .filter(([token]) => token.startsWith("--palette-") || token === "--color-accent")
+                    .slice(0, 5)
+                    .map(([token, color]) => (
                     <span
                       key={token}
                       className="size-5 rounded-full border border-white/30"

@@ -84,9 +84,9 @@ label {
 
 [data-surface="light"] body {
   background:
-    radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--color-accent-soft) 90%, transparent) 0, transparent 28%),
-    radial-gradient(circle at 85% 10%, color-mix(in srgb, var(--color-accent) 24%, transparent) 0, transparent 24%),
-    radial-gradient(circle at 50% 95%, color-mix(in srgb, var(--color-success) 18%, transparent) 0, transparent 30%),
+    radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--palette-e, var(--color-accent-soft)) 90%, transparent) 0, transparent 28%),
+    radial-gradient(circle at 85% 10%, color-mix(in srgb, var(--palette-b, var(--color-accent)) 24%, transparent) 0, transparent 24%),
+    radial-gradient(circle at 50% 95%, color-mix(in srgb, var(--palette-c, var(--color-success)) 18%, transparent) 0, transparent 30%),
     linear-gradient(180deg, color-mix(in srgb, var(--color-base) 94%, white) 0%, var(--color-base) 100%);
 }
 
@@ -104,6 +104,19 @@ label {
     linear-gradient(180deg, #05070b 0%, #010204 100%);
 }
 
+[data-theme^="palette"] body {
+  background:
+    radial-gradient(circle at 12% 16%, color-mix(in srgb, var(--palette-e) 62%, transparent) 0, transparent 26%),
+    radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--palette-c) 28%, transparent) 0, transparent 24%),
+    linear-gradient(160deg, color-mix(in srgb, var(--palette-a) 28%, var(--color-base)) 0%, var(--color-base) 48%, color-mix(in srgb, var(--palette-b) 22%, var(--color-base)) 100%);
+}
+
+[data-surface="light"] .glass-card {
+  background: rgba(255, 255, 255, 0.74);
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 14px 42px rgba(15, 23, 42, 0.13);
+}
+
 [data-surface="dark"] .bg-card,
 [data-surface="dark"] .bg-muted,
 [data-surface="black"] .bg-card,
@@ -119,12 +132,56 @@ label {
   background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
+[data-surface="light"] .bg-card {
+  background-color: rgba(255, 255, 255, 0.68) !important;
+}
+
+[data-surface="light"] .bg-muted {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+[data-surface="light"] .text-text {
+  color: var(--color-text) !important;
+}
+
+[data-surface="light"] .text-subtle {
+  color: var(--color-subtle) !important;
+}
+
 input,
 select,
 textarea {
   background: rgba(255, 255, 255, 0.1) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
   color: var(--color-text);
+}
+
+[data-surface="dark"] select,
+[data-surface="black"] select {
+  color-scheme: dark;
+}
+
+[data-surface="dark"] option,
+[data-surface="black"] option {
+  background: #111827;
+  color: #f8fafc;
+}
+
+[data-surface="light"] input,
+[data-surface="light"] select,
+[data-surface="light"] textarea {
+  background: rgba(255, 255, 255, 0.76) !important;
+  border-color: rgba(15, 23, 42, 0.16) !important;
+  color: var(--color-text);
+}
+
+[data-surface="light"] select {
+  color-scheme: light;
+}
+
+[data-surface="light"] option {
+  background: #ffffff;
+  color: #0f1b3d;
 }
 
 input::placeholder,
