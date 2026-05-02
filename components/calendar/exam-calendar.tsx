@@ -69,7 +69,7 @@ export function ExamCalendar({ exams }: { exams: ExamEvent[] }) {
       </div>
 
       <div className="mt-6 overflow-x-auto pb-2">
-        <div className="grid min-w-[700px] grid-cols-7 gap-2 sm:min-w-[880px] sm:gap-3">
+        <div className="grid min-w-[700px] grid-cols-7 gap-2 sm:min-w-[880px] sm:gap-3 xl:min-w-0 xl:w-full">
           {weekDays.map((day) => (
             <div key={day} className="rounded-2xl bg-muted px-2 py-2 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-subtle sm:px-3 sm:py-3 sm:text-xs sm:tracking-[0.18em]">
               {day}

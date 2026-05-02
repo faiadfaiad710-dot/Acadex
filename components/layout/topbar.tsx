@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, BookOpen, CalendarDays, Home, Languages, Menu, Settings, Users } from "lucide-react";
+import { Bell, BookOpen, CalendarDays, Home, Languages, Menu, Settings, Table2, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { signOutAction } from "@/lib/actions/auth";
 import { useAppConfig } from "@/providers/app-providers";
@@ -12,9 +12,9 @@ const capsuleLinks = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/teachers", label: "Teacher", icon: Users },
   { href: "/subjects", label: "Subject", icon: BookOpen },
+  { href: "/routine", label: "Routine", icon: Table2 },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/notices", label: "Notice", icon: Bell },
-  { href: "/settings", label: "Settings", icon: Settings }
+  { href: "/notices", label: "Notice", icon: Bell }
 ];
 
 export function Topbar({
@@ -85,6 +85,14 @@ export function Topbar({
                 {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
               </span>
             ) : null}
+          </Link>
+          <Link
+            href="/settings"
+            className="flex items-center justify-center rounded-2xl bg-muted p-3 text-text transition hover:bg-white/20"
+            aria-label="Settings"
+            title="Settings"
+          >
+            <Settings className="size-4 text-subtle" />
           </Link>
           <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2">
             <Languages className="size-4 text-subtle" />

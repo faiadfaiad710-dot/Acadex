@@ -117,6 +117,19 @@ export interface ExamEvent {
   createdAt?: string;
 }
 
+export interface ClassRoutine {
+  id: string;
+  subjectId: string;
+  subjectName: string;
+  day: "saturday" | "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday";
+  startTime: string;
+  endTime?: string;
+  room?: string;
+  teacherName?: string;
+  note?: string;
+  createdAt?: string;
+}
+
 export interface DashboardStats {
   totalFiles: number;
   totalSubjects: number;

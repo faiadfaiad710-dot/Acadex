@@ -11,7 +11,8 @@ import { LoginIntro } from "@/components/layout/login-intro";
 import { BottomCapsuleNav } from "@/components/layout/bottom-capsule-nav";
 import { MouseAura } from "@/components/layout/mouse-aura";
 import { getFirebaseAuth } from "@/lib/firebase/client";
-import { markNotificationsSeenAction } from "@/lib/actions/auth";
+import { Notice } from "@/lib/types";
+import { NoticePopup } from "@/components/layout/notice-popup";
 
 function getRouteTitle(pathname: string, role: UserRole) {
   if (pathname.startsWith("/admin")) {
@@ -25,6 +26,9 @@ function getRouteTitle(pathname: string, role: UserRole) {
   }
   if (pathname.startsWith("/calendar")) {
     return { title: "Calendar", subtitle: "View exam dates and academic schedule." };
+  }
+  if (pathname.startsWith("/routine")) {
+    return { title: "Class Routine", subtitle: "See today and weekly class schedules." };
   }
   if (pathname.startsWith("/notices")) {
     return { title: "Notices", subtitle: "Read and publish important announcements." };
@@ -53,10 +57,12 @@ function getRouteTitle(pathname: string, role: UserRole) {
 export function AppShell({
   role,
   unreadNotificationCount,
+  unseenNotices,
   children
 }: {
   role: UserRole;
   unreadNotificationCount: number;
+  unseenNotices: Notice[];
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -79,17 +85,16 @@ export function AppShell({
   }, [unreadNotificationCount]);
 
   useEffect(() => {
-    if (notificationCount <= 0) return;
-    const timer = window.setTimeout(() => {
-      markNotificationsSeenAction().then(() => setNotificationCount(0)).catch(() => undefined);
-    }, 1800);
-    return () => window.clearTimeout(timer);
-  }, [notificationCount]);
+    const clearNotifications = () => setNotificationCount(0);
+    window.addEventListener("acadex-notifications-seen", clearNotifications);
+    return () => window.removeEventListener("acadex-notifications-seen", clearNotifications);
+  }, []);
 
   return (
     <div className="min-h-screen px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-8">
       <MouseAura />
       <LoginIntro />
+      {pathname.startsWith("/updates") ? null : <NoticePopup notices={unseenNotices} />}
       <BottomCapsuleNav />
       <div className="mx-auto max-w-7xl">
         <div className="space-y-5">

@@ -13,7 +13,7 @@ export default async function CalendarPage() {
   const isAdmin = user?.role === "admin";
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[430px_1fr]">
+    <div className={isAdmin ? "grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]" : "space-y-5"}>
       {isAdmin ? (
         <Panel>
           <h2 className="font-heading text-xl font-semibold text-text">Add exam or event date</h2>

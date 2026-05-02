@@ -1,6 +1,7 @@
 import {
   ActivityLog,
   AdminReadingInsight,
+  ClassRoutine,
   DashboardStats,
   ExamEvent,
   FileRecord,
@@ -129,6 +130,41 @@ export async function getAllExams() {
     console.error("Failed to load exams", error);
     return [];
   }
+}
+
+const routineDayOrder: Record<ClassRoutine["day"], number> = {
+  saturday: 0,
+  sunday: 1,
+  monday: 2,
+  tuesday: 3,
+  wednesday: 4,
+  thursday: 5,
+  friday: 6
+};
+
+export async function getAllClassRoutines() {
+  const adminDb = getAdminDb();
+  try {
+    const snapshot = await adminDb.collection("classRoutines").get();
+    return snapshot.docs
+      .map((doc) => normalize<ClassRoutine>(doc.id, doc.data()))
+      .sort((a, b) => {
+        const dayDiff = routineDayOrder[a.day] - routineDayOrder[b.day];
+        if (dayDiff !== 0) return dayDiff;
+        return (a.startTime || "").localeCompare(b.startTime || "");
+      });
+  } catch (error) {
+    console.error("Failed to load class routines", error);
+    return [];
+  }
+}
+
+export async function getTodayClassRoutines() {
+  const day = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][
+    new Date().getDay()
+  ] as ClassRoutine["day"];
+  const routines = await getAllClassRoutines();
+  return routines.filter((routine) => routine.day === day);
 }
 
 export async function getAllUsers() {
@@ -306,12 +342,13 @@ export async function getAdminReadingInsight(): Promise<AdminReadingInsight> {
 
 export async function getUnreadNotificationCount(lastSeenAt?: string) {
   const cutoff = toMs(lastSeenAt);
-  const [files, notices, labs, exams, resources] = await Promise.all([
+  const [files, notices, labs, exams, resources, routines] = await Promise.all([
     getAllFiles(),
     getAllNotices(),
     getAllLabs(),
     getAllExams(),
-    getAllSubjectResources()
+    getAllSubjectResources(),
+    getAllClassRoutines()
   ]);
 
   const timestamps = [
@@ -319,10 +356,17 @@ export async function getUnreadNotificationCount(lastSeenAt?: string) {
     ...notices.map((item) => item.date),
     ...labs.map((item) => item.date),
     ...exams.map((item) => item.createdAt || item.examDate),
-    ...resources.map((item) => item.createdAt)
+    ...resources.map((item) => item.createdAt),
+    ...routines.map((item) => item.createdAt)
   ];
 
   const count = cutoff ? timestamps.filter((value) => toMs(value) > cutoff).length : timestamps.length;
 
   return count;
+}
+
+export async function getLatestUnseenNotices(lastSeenAt?: string, limit = 3) {
+  const cutoff = toMs(lastSeenAt);
+  const notices = await getAllNotices();
+  return notices.filter((notice) => !cutoff || toMs(notice.date) > cutoff).slice(0, limit);
 }

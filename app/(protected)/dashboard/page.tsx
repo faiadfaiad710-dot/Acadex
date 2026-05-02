@@ -8,7 +8,8 @@ import {
   getAllLabs,
   getStudentReadingInsight,
   getAllTeachers,
-  getAllSubjectResources
+  getAllSubjectResources,
+  getTodayClassRoutines
 } from "@/lib/data";
 import { requireUser } from "@/lib/auth/guards";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -21,7 +22,7 @@ import { formatDate, getNoticeDownloadHref } from "@/lib/utils";
 
 export default async function DashboardPage() {
   await requireUser();
-  const [user, files, subjects, notices, labs, teachers, exams, subjectResources] = await Promise.all([
+  const [user, files, subjects, notices, labs, teachers, exams, subjectResources, todayClasses] = await Promise.all([
     getCurrentUser(),
     getAllFiles(),
     getAllSubjects(),
@@ -29,7 +30,8 @@ export default async function DashboardPage() {
     getAllLabs(),
     getAllTeachers(),
     getAllExams(),
-    getAllSubjectResources()
+    getAllSubjectResources(),
+    getTodayClassRoutines()
   ]);
   const [studentInsight, adminInsight] = await Promise.all([
     user ? getStudentReadingInsight(user.uid) : Promise.resolve({ favoriteSubjectName: "No subject yet", favoriteSubjectCount: 0, monthlyReads: [] }),
@@ -81,23 +83,45 @@ export default async function DashboardPage() {
 
       <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
         <BarChart title="Your subject reading this month" data={studentInsight.monthlyReads} />
-        {user?.role === "admin" && adminInsight ? (
-          <BarChart title="Most opened subjects this month" data={adminInsight.popularSubjects} />
-        ) : (
-          <Panel>
-            <h3 className="font-heading text-lg font-semibold text-text">Reading focus</h3>
-            <p className="mt-2 text-sm text-subtle">Acadex tracks which subjects you open and read most often this month.</p>
-            <div className="mt-5 space-y-3">
-              {studentInsight.monthlyReads.slice(0, 4).map((item) => (
-                <div key={item.subject} className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3">
-                  <span className="text-sm font-medium text-text">{item.subject}</span>
-                  <span className="text-sm text-subtle">{item.total}</span>
-                </div>
-              ))}
+        <Panel>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-text">Today classes</h3>
+              <p className="mt-2 text-sm text-subtle">Your class routine for today.</p>
             </div>
-          </Panel>
-        )}
+            <Link href="/routine" className="rounded-2xl bg-muted px-3 py-2 text-xs font-semibold text-accent">
+              Routine
+            </Link>
+          </div>
+          <div className="mt-5 space-y-3">
+            {todayClasses.length ? (
+              todayClasses.map((routine) => (
+                <div key={routine.id} className="rounded-2xl border border-border bg-card p-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="font-semibold text-text">{routine.subjectName}</p>
+                      <p className="mt-1 text-sm text-subtle">{routine.teacherName || "Teacher not assigned"}</p>
+                      {routine.room ? <p className="mt-1 text-sm text-subtle">Room: {routine.room}</p> : null}
+                    </div>
+                    <p className="text-sm font-semibold text-accent">
+                      {routine.startTime}
+                      {routine.endTime ? ` - ${routine.endTime}` : ""}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border bg-card p-5 text-sm text-subtle">
+                No class scheduled today.
+              </div>
+            )}
+          </div>
+        </Panel>
       </div>
+
+      {user?.role === "admin" && adminInsight ? (
+        <BarChart title="Most opened subjects this month" data={adminInsight.popularSubjects} />
+      ) : null}
 
       {user?.role === "admin" && adminInsight ? (
         <Panel>

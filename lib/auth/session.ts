@@ -5,6 +5,17 @@ import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { SESSION_COOKIE_NAME } from "@/lib/constants";
 import { UserProfile } from "@/lib/types";
 
+function serializeProfile(data: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(data).map(([key, value]) => {
+      if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+        return [key, value.toDate().toISOString()];
+      }
+      return [key, value];
+    })
+  ) as unknown as UserProfile;
+}
+
 export async function createSession(idToken: string) {
   const expiresIn = 60 * 60 * 24 * 5 * 1000;
   const adminAuth = getAdminAuth();
@@ -35,7 +46,7 @@ export async function getCurrentUser() {
     const decoded = await adminAuth.verifySessionCookie(session, true);
     const profile = await adminDb.collection("users").doc(decoded.uid).get();
     if (!profile.exists) return null;
-    return profile.data() as UserProfile;
+    return serializeProfile(profile.data() || {});
   } catch {
     return null;
   }

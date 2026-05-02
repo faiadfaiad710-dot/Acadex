@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { clearSession, createSession, getCurrentUser } from "@/lib/auth/session";
 import { normalizePhone } from "@/lib/auth/phone";
@@ -75,7 +74,7 @@ export async function markNotificationsSeenAction() {
   const adminDb = getAdminDb();
   await adminDb.collection("users").doc(user.uid).set(
     {
-      lastSeenAt: FieldValue.serverTimestamp()
+      lastSeenAt: new Date().toISOString()
     },
     { merge: true }
   );
@@ -86,4 +85,6 @@ export async function markNotificationsSeenAction() {
   revalidatePath("/calendar");
   revalidatePath("/teachers");
   revalidatePath("/labs");
+  revalidatePath("/routine");
+  revalidatePath("/updates");
 }

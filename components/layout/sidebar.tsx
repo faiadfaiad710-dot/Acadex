@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarDays, FlaskConical, LayoutDashboard, Megaphone, Settings, ShieldCheck, Upload, Users2, UserRoundCog, X } from "lucide-react";
+import { BookOpen, CalendarDays, FlaskConical, LayoutDashboard, Megaphone, Settings, ShieldCheck, Table2, Upload, Users2, UserRoundCog, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import { useAppConfig } from "@/providers/app-providers";
@@ -20,6 +20,7 @@ const navItems: Array<{
   { href: "/admin", labelKey: "adminPanel", label: "Admin Panel", icon: ShieldCheck, roles: ["admin"] },
   { href: "/upload", labelKey: "upload", label: "Upload", icon: Upload, roles: ["admin"] },
   { href: "/subjects", labelKey: "subjects", label: "Subjects", icon: BookOpen, roles: ["admin", "user"] },
+  { href: "/routine", label: "Routine", icon: Table2, roles: ["admin", "user"] },
   { href: "/calendar", labelKey: "calendar", label: "Calendar", icon: CalendarDays, roles: ["admin", "user"] },
   { href: "/notices", labelKey: "notices", label: "Notices", icon: Megaphone, roles: ["admin", "user"] },
   { href: "/teachers", labelKey: "teachers", label: "Teachers", icon: Users2, roles: ["admin", "user"] },

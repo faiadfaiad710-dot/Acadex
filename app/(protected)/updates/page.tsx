@@ -6,9 +6,11 @@ import {
   getAllLabs,
   getAllNotices,
   getAllSubjectResources,
-  getAllSubjects
+  getAllSubjects,
+  getAllClassRoutines
 } from "@/lib/data";
 import { Panel } from "@/components/ui/panel";
+import { MarkUpdatesSeen } from "@/components/updates/mark-updates-seen";
 import {
   formatDate,
   getFileDownloadHref,
@@ -31,13 +33,14 @@ type UpdateItem = {
 
 export default async function UpdatesPage() {
   await requireUser();
-  const [files, notices, resources, labs, exams, subjects] = await Promise.all([
+  const [files, notices, resources, labs, exams, subjects, routines] = await Promise.all([
     getAllFiles(),
     getAllNotices(),
     getAllSubjectResources(),
     getAllLabs(),
     getAllExams(),
-    getAllSubjects()
+    getAllSubjects(),
+    getAllClassRoutines()
   ]);
 
   const subjectNameById = new Map(subjects.map((subject) => [subject.id, subject.name]));
@@ -88,6 +91,14 @@ export default async function UpdatesPage() {
       description: `${exam.kind === "event" ? "Event" : "Exam"} on ${exam.subjectName || "General schedule"}`,
       date: exam.createdAt || exam.examDate,
       openHref: "/calendar"
+    })),
+    ...routines.map((routine) => ({
+      id: `routine-${routine.id}`,
+      kind: "calendar" as const,
+      title: routine.subjectName,
+      description: `Class routine on ${routine.day} at ${routine.startTime}`,
+      date: routine.createdAt || "",
+      openHref: "/routine"
     }))
   ]
     .filter((item) => item.date)
@@ -95,6 +106,7 @@ export default async function UpdatesPage() {
 
   return (
     <Panel>
+      <MarkUpdatesSeen />
       <h2 className="font-heading text-xl font-semibold text-text">Updates</h2>
       <p className="mt-2 text-sm text-subtle">See new files, notices, lab uploads, subject resources, and calendar changes in one place.</p>
 

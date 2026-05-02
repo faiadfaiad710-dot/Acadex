@@ -73,6 +73,17 @@ const examSchema = z.object({
   note: z.string().optional()
 });
 
+const routineSchema = z.object({
+  id: z.string().optional(),
+  subjectId: z.string().min(1),
+  day: z.enum(["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"]),
+  startTime: z.string().min(1),
+  endTime: z.string().optional(),
+  room: z.string().optional(),
+  teacherName: z.string().optional(),
+  note: z.string().optional()
+});
+
 function validateFile(file: File | null | undefined) {
   if (!file || file.size === 0) return;
   if (file.size > MAX_FILE_SIZE) {
@@ -433,6 +444,7 @@ export async function saveNoticeAction(formData: FormData) {
   revalidatePath("/notices");
   revalidatePath("/dashboard");
   revalidatePath("/admin");
+  revalidatePath("/updates");
 }
 
 export async function deleteNoticeAction(formData: FormData) {
@@ -442,6 +454,7 @@ export async function deleteNoticeAction(formData: FormData) {
   await adminDb.collection("notices").doc(id).delete();
   revalidatePath("/notices");
   revalidatePath("/dashboard");
+  revalidatePath("/updates");
 }
 
 export async function saveTeacherAction(formData: FormData) {
@@ -804,4 +817,58 @@ export async function deleteExamAction(formData: FormData) {
   await adminDb.collection("exams").doc(id).delete();
   revalidatePath("/calendar");
   revalidatePath("/dashboard");
+}
+
+export async function saveClassRoutineAction(formData: FormData) {
+  await requireAdmin();
+  const adminDb = getAdminDb();
+  const parsed = routineSchema.parse({
+    id: formData.get("id") || undefined,
+    subjectId: formData.get("subjectId"),
+    day: formData.get("day"),
+    startTime: formData.get("startTime"),
+    endTime: formData.get("endTime") || "",
+    room: formData.get("room") || "",
+    teacherName: formData.get("teacherName") || "",
+    note: formData.get("note") || ""
+  });
+
+  const subjectDoc = await adminDb.collection("subjects").doc(parsed.subjectId).get();
+  const subjectName = String(subjectDoc.data()?.name || "");
+  if (!subjectName) throw new Error("Select a valid subject.");
+
+  const payload = {
+    subjectId: parsed.subjectId,
+    subjectName,
+    day: parsed.day,
+    startTime: parsed.startTime,
+    endTime: parsed.endTime || "",
+    room: parsed.room || "",
+    teacherName: parsed.teacherName || "",
+    note: parsed.note || ""
+  };
+
+  if (parsed.id) {
+    await adminDb.collection("classRoutines").doc(parsed.id).set(payload, { merge: true });
+  } else {
+    await adminDb.collection("classRoutines").add({
+      ...payload,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  revalidatePath("/routine");
+  revalidatePath("/dashboard");
+  revalidatePath("/updates");
+}
+
+export async function deleteClassRoutineAction(formData: FormData) {
+  await requireAdmin();
+  const adminDb = getAdminDb();
+  const id = String(formData.get("id") || "");
+  if (!id) throw new Error("Routine id is required.");
+  await adminDb.collection("classRoutines").doc(id).delete();
+  revalidatePath("/routine");
+  revalidatePath("/dashboard");
+  revalidatePath("/updates");
 }
