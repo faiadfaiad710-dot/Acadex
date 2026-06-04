@@ -2,12 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { motion } from "framer-motion";
-import { getFirebaseAuth } from "@/lib/firebase/client";
-import { signInWithTokenAction } from "@/lib/actions/auth";
 import { useAppConfig } from "@/providers/app-providers";
-import { credentialToEmail } from "@/lib/auth/phone";
 
 export function LoginForm() {
   const router = useRouter();
@@ -30,12 +26,15 @@ export function LoginForm() {
 
         startTransition(async () => {
           try {
-            const firebaseAuth = getFirebaseAuth();
-            const email = credentialToEmail(loginId);
-            if (!email) throw new Error("Enter a valid roll number or email.");
-            const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
-            const token = await credential.user.getIdToken(true);
-            await signInWithTokenAction(token);
+            const res = await fetch("/api/auth/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ loginId, password })
+            });
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+              throw new Error(data?.error || "Unable to sign in");
+            }
             window.sessionStorage.setItem("acadex-intro", String(Date.now()));
             router.push("/dashboard");
           } catch (authError) {

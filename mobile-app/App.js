@@ -24,8 +24,8 @@ import {
 import { WebView } from "react-native-webview";
 
 const config = Constants.expoConfig?.extra || {};
-const firebaseApiKey = process.env.EXPO_PUBLIC_FIREBASE_API_KEY || config.firebaseApiKey;
 const firebaseProjectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || config.firebaseProjectId || "website-99ec7";
+const apiBaseUrl = String(process.env.EXPO_PUBLIC_API_BASE_URL || config.apiBaseUrl || config.acadexUrl || "https://acadex-one-beta.vercel.app").replace(/\/$/, "");
 const firestoreBase = `https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents`;
 const downloadDir = `${FileSystem.documentDirectory}acadex-files/`;
 const registryPath = `${FileSystem.documentDirectory}acadex-downloads.json`;
@@ -111,13 +111,6 @@ const themes = {
     danger: "#f87171"
   }
 };
-
-function loginIdToEmail(value) {
-  const trimmed = value.trim();
-  if (trimmed.includes("@")) return trimmed.toLowerCase();
-  const digits = trimmed.replace(/\D/g, "");
-  return `${digits}@phone.academic.local`;
-}
 
 function firestoreValue(value) {
   if (!value || typeof value !== "object") return value;
@@ -722,17 +715,17 @@ export default function App() {
     setBusy(true);
     setMessage("Signing in...");
     try {
-      const body = await fetchJson(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`, {
+      const body = await fetchJson(`${apiBaseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: loginIdToEmail(roll),
-          password,
-          returnSecureToken: true
+          loginId: roll,
+          password
         })
       });
       setIdToken(body.idToken);
       setLocalId(body.localId);
+      if (body.profile) setProfile(body.profile);
       setMessage("Logged in. Sync starting...");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Login failed");
