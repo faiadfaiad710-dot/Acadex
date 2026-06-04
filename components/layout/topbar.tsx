@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, BookOpen, CalendarDays, Home, Languages, Menu, Settings, Table2, Users } from "lucide-react";
+import { Bell, BookOpen, Home, Languages, Menu, Search, Settings, Table2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { signOutAction } from "@/lib/actions/auth";
 import { useAppConfig } from "@/providers/app-providers";
@@ -10,11 +10,9 @@ import { cn } from "@/lib/utils";
 
 const capsuleLinks = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/teachers", label: "Teacher", icon: Users },
   { href: "/subjects", label: "Subject", icon: BookOpen },
   { href: "/routine", label: "Routine", icon: Table2 },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/notices", label: "Notice", icon: Bell }
+  { href: "/search", label: "Search", icon: Search }
 ];
 
 export function Topbar({

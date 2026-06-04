@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarDays, FlaskConical, LayoutDashboard, Megaphone, Settings, ShieldCheck, Table2, Upload, Users2, UserRoundCog, X } from "lucide-react";
+import { BookOpen, CalendarDays, FlaskConical, LayoutDashboard, Megaphone, Search, Settings, ShieldCheck, Table2, Upload, Users2, UserRoundCog, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import { useAppConfig } from "@/providers/app-providers";
@@ -15,17 +15,19 @@ const navItems: Array<{
   icon: typeof LayoutDashboard;
   roles: UserRole[];
 }> = [
-  { href: "/dashboard", labelKey: "dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["user", "admin"] },
-  { href: "/settings", label: "Settings", icon: Settings, roles: ["admin", "user"] },
+  { href: "/dashboard", labelKey: "dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["user", "manager", "admin"] },
+  { href: "/search", label: "Search", icon: Search, roles: ["user", "manager", "admin"] },
+  { href: "/settings", label: "Settings", icon: Settings, roles: ["admin", "manager", "user"] },
   { href: "/admin", labelKey: "adminPanel", label: "Admin Panel", icon: ShieldCheck, roles: ["admin"] },
-  { href: "/upload", labelKey: "upload", label: "Upload", icon: Upload, roles: ["admin"] },
-  { href: "/subjects", labelKey: "subjects", label: "Subjects", icon: BookOpen, roles: ["admin", "user"] },
-  { href: "/routine", label: "Routine", icon: Table2, roles: ["admin", "user"] },
-  { href: "/calendar", labelKey: "calendar", label: "Calendar", icon: CalendarDays, roles: ["admin", "user"] },
-  { href: "/notices", labelKey: "notices", label: "Notices", icon: Megaphone, roles: ["admin", "user"] },
-  { href: "/teachers", labelKey: "teachers", label: "Teachers", icon: Users2, roles: ["admin", "user"] },
-  { href: "/labs", labelKey: "labs", label: "Labs", icon: FlaskConical, roles: ["admin", "user"] },
-  { href: "/profile", labelKey: "profile", label: "Profile", icon: UserRoundCog, roles: ["admin", "user"] }
+  { href: "/manager", label: "Manager Panel", icon: ShieldCheck, roles: ["manager"] },
+  { href: "/upload", labelKey: "upload", label: "Upload", icon: Upload, roles: ["admin", "manager"] },
+  { href: "/subjects", labelKey: "subjects", label: "Subjects", icon: BookOpen, roles: ["admin", "manager", "user"] },
+  { href: "/routine", label: "Routine", icon: Table2, roles: ["admin", "manager", "user"] },
+  { href: "/calendar", labelKey: "calendar", label: "Calendar", icon: CalendarDays, roles: ["admin", "manager", "user"] },
+  { href: "/notices", labelKey: "notices", label: "Notices", icon: Megaphone, roles: ["admin", "manager", "user"] },
+  { href: "/teachers", labelKey: "teachers", label: "Teachers", icon: Users2, roles: ["admin", "manager", "user"] },
+  { href: "/labs", labelKey: "labs", label: "Labs", icon: FlaskConical, roles: ["admin", "manager", "user"] },
+  { href: "/profile", labelKey: "profile", label: "Profile", icon: UserRoundCog, roles: ["admin", "manager", "user"] }
 ];
 
 export function Sidebar({
@@ -41,17 +43,16 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const { dictionary } = useAppConfig();
-  const visibleItems =
-    role === "admin"
-      ? navItems
-      : navItems.filter((item) => item.href !== "/admin" && item.href !== "/upload");
+  const visibleItems = navItems.filter((item) => item.roles.includes(role));
 
   return (
     <aside className={cn("glass-card sidebar-glass flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain rounded-[32px] border border-border/70 p-5 shadow-card touch-pan-y [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden", className)}>
       <div className="mb-8 flex items-start justify-between gap-3">
         <div>
           <p className="brand-gradient font-heading text-4xl font-black tracking-tight">Acadex</p>
-          <p className="mt-2 text-sm text-subtle">{role === "admin" ? "Administrator workspace" : "Student workspace"}</p>
+          <p className="mt-2 text-sm text-subtle">
+            {role === "admin" ? "Administrator workspace" : role === "manager" ? "Manager workspace" : "Student workspace"}
+          </p>
         </div>
         {onClose ? (
           <button

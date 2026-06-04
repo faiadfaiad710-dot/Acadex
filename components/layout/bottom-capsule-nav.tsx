@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, BookOpen, CalendarDays, Home, Table2, Users } from "lucide-react";
+import { BookOpen, Home, Search, Table2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const capsuleLinks = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/teachers", label: "Teacher", icon: Users },
   { href: "/subjects", label: "Subject", icon: BookOpen },
   { href: "/routine", label: "Routine", icon: Table2 },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/notices", label: "Notice", icon: Bell }
+  { href: "/search", label: "Search", icon: Search }
 ];
 
 export function BottomCapsuleNav() {

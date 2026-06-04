@@ -21,6 +21,12 @@ function getRouteTitle(pathname: string, role: UserRole) {
   if (pathname.startsWith("/upload")) {
     return { title: "Upload Files", subtitle: "Upload PDFs and academic documents for students." };
   }
+  if (pathname.startsWith("/manager")) {
+    return { title: "Manager Panel", subtitle: "Upload files and update routine, calendar, and subject resources." };
+  }
+  if (pathname.startsWith("/search")) {
+    return { title: "Search", subtitle: "Find files, subjects, teachers, labs, notices, and updates." };
+  }
   if (pathname.startsWith("/subjects")) {
     return { title: "Subjects", subtitle: "Browse and manage academic subjects." };
   }
