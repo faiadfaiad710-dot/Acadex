@@ -106,8 +106,8 @@ export async function POST(req: Request) {
     const profileSnapshot = await adminDb.collection("users").doc(decoded.uid).get();
     const profile = profileSnapshot.data();
 
-    if (!profileSnapshot.exists || profile?.role !== "admin") {
-      return Response.json({ error: "Only admins can upload subject files." }, { status: 403 });
+    if (!profileSnapshot.exists || !["admin", "manager"].includes(String(profile?.role || ""))) {
+      return Response.json({ error: "Only admins and managers can upload subject files." }, { status: 403 });
     }
 
     const contentType = req.headers.get("content-type") || "";

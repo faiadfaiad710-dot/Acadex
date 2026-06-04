@@ -263,6 +263,7 @@ const ResourceTree = memo(function ResourceTree({
   subjectId,
   sectionId,
   isAdmin,
+  canManageContent,
   openIds,
   setOpenIds,
   saveSubjectResourceAction,
@@ -272,6 +273,7 @@ const ResourceTree = memo(function ResourceTree({
   subjectId: string;
   sectionId: string;
   isAdmin: boolean;
+  canManageContent: boolean;
   openIds: Set<string>;
   setOpenIds: Dispatch<SetStateAction<Set<string>>>;
   saveSubjectResourceAction: (formData: FormData) => void | Promise<void>;
@@ -347,7 +349,7 @@ const ResourceTree = memo(function ResourceTree({
             className="overflow-hidden"
           >
             <div className="mt-4 space-y-3 border-l border-border/70 pl-4">
-              {isAdmin ? (
+              {canManageContent ? (
                 <ResourceCreator
                   subjectId={subjectId}
                   sectionId={sectionId}
@@ -365,6 +367,7 @@ const ResourceTree = memo(function ResourceTree({
                     subjectId={subjectId}
                     sectionId={sectionId}
                     isAdmin={isAdmin}
+                    canManageContent={canManageContent}
                     openIds={openIds}
                     setOpenIds={setOpenIds}
                     saveSubjectResourceAction={saveSubjectResourceAction}
@@ -389,6 +392,7 @@ export function SubjectDetailView({
   legacyFiles,
   teachers,
   isAdmin,
+  canManageContent,
   initialOpenSectionId,
   initialOpenResourceIds,
   saveSubjectSectionAction,
@@ -402,6 +406,7 @@ export function SubjectDetailView({
   legacyFiles: { id: string; title: string }[];
   teachers: Teacher[];
   isAdmin: boolean;
+  canManageContent: boolean;
   initialOpenSectionId: string;
   initialOpenResourceIds: string[];
   saveSubjectSectionAction: (formData: FormData) => void | Promise<void>;
@@ -540,7 +545,7 @@ export function SubjectDetailView({
                     className="overflow-hidden"
                   >
                     <div className="mt-4 space-y-4">
-                      {isAdmin ? (
+                      {canManageContent ? (
                         <ResourceCreator
                           subjectId={subject.id}
                           sectionId={section.id}
@@ -557,6 +562,7 @@ export function SubjectDetailView({
                             subjectId={subject.id}
                             sectionId={section.id}
                             isAdmin={isAdmin}
+                            canManageContent={canManageContent}
                             openIds={openResourceIds}
                             setOpenIds={setOpenResourceIds}
                             saveSubjectResourceAction={saveSubjectResourceAction}

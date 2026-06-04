@@ -11,13 +11,14 @@ export default async function CalendarPage() {
   await requireUser();
   const [user, subjects, exams] = await Promise.all([getCurrentUser(), getAllSubjects(), getAllExams()]);
   const isAdmin = user?.role === "admin";
+  const canManageCalendar = isAdmin || user?.role === "manager";
 
   return (
-    <div className={isAdmin ? "grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]" : "space-y-5"}>
-      {isAdmin ? (
+    <div className={canManageCalendar ? "grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]" : "space-y-5"}>
+      {canManageCalendar ? (
         <Panel>
           <h2 className="font-heading text-xl font-semibold text-text">Add exam or event date</h2>
-          <p className="mt-2 text-sm text-subtle">Admin can publish both exam dates and general event dates for students.</p>
+          <p className="mt-2 text-sm text-subtle">Admins and managers can publish both exam dates and general event dates for students.</p>
           <CalendarEntryForm subjects={subjects} action={saveExamAction} />
         </Panel>
       ) : null}

@@ -1,11 +1,11 @@
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdminOrManager } from "@/lib/auth/guards";
 import { getAllFiles, getAllSubjects } from "@/lib/data";
 import { Panel } from "@/components/ui/panel";
 import { UploadForm } from "@/components/upload/upload-form";
 import { UploadedFilesList } from "@/components/upload/uploaded-files-list";
 
 export default async function UploadPage() {
-  await requireAdmin();
+  await requireAdminOrManager();
   const [subjects, files] = await Promise.all([getAllSubjects(), getAllFiles()]);
 
   return (

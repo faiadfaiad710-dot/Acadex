@@ -62,6 +62,7 @@ export default async function SubjectDetailPage({
         legacyFiles={files.filter((file) => file.subjectId === subject.id).map((file) => ({ id: file.id, title: file.title }))}
         teachers={teachers}
         isAdmin={user?.role === "admin"}
+        canManageContent={user?.role === "admin" || user?.role === "manager"}
         initialOpenSectionId={initialOpenSectionId}
         initialOpenResourceIds={initialOpenResourceIds}
         saveSubjectSectionAction={saveSubjectSectionAction}

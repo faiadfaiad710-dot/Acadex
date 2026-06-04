@@ -15,7 +15,7 @@ export default async function AdminPage() {
       <div className="grid gap-5 md:grid-cols-3">
         <StatCard label="Total files" value={stats.totalFiles} helper="All uploaded academic files" />
         <StatCard label="Total subjects" value={stats.totalSubjects} helper="Subjects available for assignment" />
-        <StatCard label="Total users" value={stats.totalUsers} helper="Admin and student accounts" />
+        <StatCard label="Total users" value={stats.totalUsers} helper="Admin, manager, and student accounts" />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
@@ -49,6 +49,7 @@ export default async function AdminPage() {
             <input name="password" type="text" placeholder="Temporary password" required className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent" />
             <select name="role" className="w-full rounded-2xl border border-border bg-card px-4 py-3 outline-none focus:border-accent">
               <option value="user">User</option>
+              <option value="manager">Manager</option>
               <option value="admin">Admin</option>
             </select>
             <button className="w-full rounded-2xl bg-accent px-4 py-3 font-medium text-white transition hover:opacity-90">Create account</button>

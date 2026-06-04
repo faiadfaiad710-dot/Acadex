@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
 import { MAX_FILE_SIZE, DEFAULT_SUBJECTS } from "@/lib/constants";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdmin, requireAdminOrManager } from "@/lib/auth/guards";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { normalizePhone, phoneToLoginEmail } from "@/lib/auth/phone";
@@ -59,7 +59,7 @@ const createUserSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().min(5),
   password: z.string().min(6),
-  role: z.enum(["admin", "user"])
+  role: z.enum(["admin", "manager", "user"])
 });
 
 const examSchema = z.object({
@@ -367,7 +367,7 @@ export async function seedDefaultSubjectsAction() {
 }
 
 export async function uploadAcademicFileAction(formData: FormData) {
-  const admin = await requireAdmin();
+  const staff = await requireAdminOrManager();
   const adminDb = getAdminDb();
   const title = String(formData.get("title") || "");
   const subjectId = String(formData.get("subjectId") || "");
@@ -394,7 +394,7 @@ export async function uploadAcademicFileAction(formData: FormData) {
     resourceType: "raw",
     format: file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() || "" : "",
     uploadDate: new Date().toISOString(),
-    uploadedBy: admin.email,
+    uploadedBy: staff.email,
     fileType: file.type || "unknown",
     fileSize: file.size
   });
@@ -550,7 +550,7 @@ export async function deleteSubjectSectionAction(formData: FormData) {
 }
 
 export async function saveSubjectResourceAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminOrManager();
   const adminDb = getAdminDb();
   const parsed = subjectResourceSchema.parse({
     id: formData.get("id") || undefined,
@@ -764,7 +764,7 @@ export async function touchUserAction(uid: string) {
 }
 
 export async function saveExamAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminOrManager();
   const adminDb = getAdminDb();
   const parsed = examSchema.parse({
     id: formData.get("id") || undefined,
@@ -821,7 +821,7 @@ export async function deleteExamAction(formData: FormData) {
 }
 
 export async function saveClassRoutineAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminOrManager();
   const adminDb = getAdminDb();
   const parsed = routineSchema.parse({
     id: formData.get("id") || undefined,

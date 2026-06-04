@@ -4,19 +4,27 @@
     "slug": "acadex",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "scheme": "acadex",
     "android": {
       "package": "com.acadex.portal",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#020617"
       },
       "permissions": [
-        "INTERNET"
+        "INTERNET",
+        "POST_NOTIFICATIONS",
+        "VIBRATE",
+        "SCHEDULE_EXACT_ALARM"
       ]
     },
     "extra": {
       "acadexUrl": "https://acadex-one-beta.vercel.app",
+      "apiBaseUrl": "https://acadex-one-beta.vercel.app",
+      "firebaseApiKey": "AIzaSyDqH29ibvyk1iX8fYQbzfJhSZr23KA8K_w",
+      "firebaseProjectId": "website-99ec7",
       "eas": {
         "projectId": "7bcc1bf9-d88a-4cd0-a01c-39d9ab375602"
       }

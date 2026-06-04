@@ -48,6 +48,10 @@ function normalize<T extends { id?: string }>(id: string, data: Record<string, u
   return { id, ...(serializeFirestoreValue(data) as Record<string, unknown>) } as T;
 }
 
+function localDateKey(date = new Date()) {
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
 export async function getAllSubjects() {
   const adminDb = getAdminDb();
   try {
@@ -125,7 +129,10 @@ export async function getAllExams() {
   const adminDb = getAdminDb();
   try {
     const snapshot = await adminDb.collection("exams").orderBy("examDate", "asc").get();
-    return snapshot.docs.map((doc) => normalize<ExamEvent>(doc.id, doc.data()));
+    const today = localDateKey();
+    return snapshot.docs
+      .map((doc) => normalize<ExamEvent>(doc.id, doc.data()))
+      .filter((exam) => String(exam.examDate || "") >= today);
   } catch (error) {
     console.error("Failed to load exams", error);
     return [];
