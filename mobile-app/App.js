@@ -10,6 +10,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Keyboard,
   Platform,
   Pressable,
   StatusBar as RNStatusBar,
@@ -29,12 +30,14 @@ const firestoreBase = `https://firestore.googleapis.com/v1/projects/${firebasePr
 const downloadDir = `${FileSystem.documentDirectory}acadex-files/`;
 const registryPath = `${FileSystem.documentDirectory}acadex-downloads.json`;
 const notificationRegistryPath = `${FileSystem.documentDirectory}acadex-notifications.json`;
-const tabs = ["Dashboard", "Teacher", "Subject", "Routine", "Calendar", "Notice", "Lab", "Updates", "Settings", "Downloads"];
 const navItems = [
   { key: "Dashboard", label: "Home", icon: "A" },
-  { key: "Teacher", label: "Teacher", icon: "T" },
   { key: "Subject", label: "Subject", icon: "S" },
   { key: "Routine", label: "Class", icon: "R" },
+  { key: "Search", label: "Search", icon: "Q" }
+];
+const drawerItems = [
+  { key: "Teacher", label: "Teacher", icon: "T" },
   { key: "Calendar", label: "Calendar", icon: "C" },
   { key: "Notice", label: "Notice", icon: "N" },
   { key: "Lab", label: "Lab", icon: "L" },
@@ -424,6 +427,100 @@ function todayRoutine(routines) {
   return routines.filter((routine) => routine.day === today).sort((a, b) => String(a.startTime).localeCompare(String(b.startTime)));
 }
 
+function buildLocalSearchResults(data, query) {
+  const value = String(query || "").trim().toLowerCase();
+  if (!value) return [];
+
+  const matches = (...items) => items.some((item) => String(item || "").toLowerCase().includes(value));
+  const results = [];
+
+  data.files.forEach((file) => {
+    if (matches(file.title, file.subjectName, extensionFrom(file))) {
+      results.push({
+        key: file.key,
+        type: "File",
+        title: file.title,
+        subtitle: file.subjectName || "Academic file",
+        item: file
+      });
+    }
+  });
+
+  data.subjects.forEach((subject) => {
+    if (matches(subject.name, subject.code, subject.semesterName)) {
+      results.push({
+        key: `subject:${subject.id}`,
+        type: "Subject",
+        title: subject.name,
+        subtitle: subject.code || subject.semesterName || "Subject",
+        target: "Subject"
+      });
+    }
+  });
+
+  data.teachers.forEach((teacher) => {
+    if (matches(teacher.name, teacher.designation, teacher.email)) {
+      results.push({
+        key: `teacher:${teacher.id}`,
+        type: "Teacher",
+        title: teacher.name || "Teacher",
+        subtitle: teacher.designation || "Faculty",
+        target: "Teacher"
+      });
+    }
+  });
+
+  data.notices.forEach((notice) => {
+    if (matches(notice.text, notice.attachmentName)) {
+      results.push({
+        key: `notice-result:${notice.id}`,
+        type: "Notice",
+        title: notice.text || notice.attachmentName || "Notice",
+        subtitle: notice.date ? new Date(notice.date).toLocaleString() : "Notice",
+        target: "Notice"
+      });
+    }
+  });
+
+  data.labs.forEach((lab) => {
+    if (matches(lab.title, lab.subjectName, lab.description)) {
+      results.push({
+        key: `lab-result:${lab.id}`,
+        type: "Lab",
+        title: lab.title || "Lab",
+        subtitle: lab.subjectName || "Lab document",
+        target: "Lab"
+      });
+    }
+  });
+
+  data.routines.forEach((routine) => {
+    if (matches(routine.subjectName, routine.teacherName, routine.room, routine.day)) {
+      results.push({
+        key: `routine:${routine.id}`,
+        type: "Routine",
+        title: routine.subjectName || "Class routine",
+        subtitle: `${routine.day || "Class"} ${routine.startTime || ""}`.trim(),
+        target: "Routine"
+      });
+    }
+  });
+
+  data.exams.forEach((event) => {
+    if (matches(event.title, event.subjectName, event.examDate, event.kind)) {
+      results.push({
+        key: `calendar:${event.id}`,
+        type: (event.kind || "exam") === "event" ? "Event" : "Exam",
+        title: event.title || "Calendar event",
+        subtitle: event.examDate || "Calendar",
+        target: "Calendar"
+      });
+    }
+  });
+
+  return results.slice(0, 30);
+}
+
 function FlowBackground({ theme }) {
   const motion = useRef(new Animated.Value(0)).current;
   const { width, height } = Dimensions.get("window");
@@ -482,6 +579,10 @@ export default function App() {
   const [roll, setRoll] = useState("");
   const [password, setPassword] = useState("");
   const [activeTab, setActiveTab] = useState("Dashboard");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [themeName, setThemeName] = useState("glass");
   const [data, setData] = useState(normalizeAcadexData({}));
   const [downloads, setDownloads] = useState({});
@@ -491,10 +592,13 @@ export default function App() {
   const [viewer, setViewer] = useState(null);
   const [textPreview, setTextPreview] = useState("");
   const notificationsPrimedRef = useRef(false);
+  const sectionMotion = useRef(new Animated.Value(1)).current;
   const theme = themes[themeName] || themes.glass;
 
   const dynamic = useMemo(() => makeDynamicStyles(theme), [theme]);
   const downloadedItems = useMemo(() => data.files.filter((item) => downloads[item.key]?.uri), [data.files, downloads]);
+  const searchResults = useMemo(() => buildLocalSearchResults(data, searchQuery), [data, searchQuery]);
+  const sectionTranslateY = sectionMotion.interpolate({ inputRange: [0, 1], outputRange: [12, 0] });
 
   const downloadOne = useCallback(async (item, currentRegistry) => {
     if (!item?.fileUrl || currentRegistry[item.key]?.uri) return currentRegistry;
@@ -566,11 +670,48 @@ export default function App() {
   }, [message]);
 
   useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, (event) => {
+      setKeyboardHeight(event.endCoordinates?.height || 0);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!idToken || !localId) return undefined;
     syncNow();
     const timer = setInterval(() => syncNow({ silent: true }), 30000);
     return () => clearInterval(timer);
   }, [idToken, localId, syncNow]);
+
+  const changeSection = useCallback(
+    (nextTab) => {
+      if (nextTab === "Search") {
+        setSearchOpen(true);
+        return;
+      }
+      if (nextTab === activeTab) return;
+      Animated.timing(sectionMotion, {
+        toValue: 0,
+        duration: 90,
+        useNativeDriver: true
+      }).start(() => {
+        setActiveTab(nextTab);
+        Animated.spring(sectionMotion, {
+          toValue: 1,
+          speed: 18,
+          bounciness: 4,
+          useNativeDriver: true
+        }).start();
+      });
+    },
+    [activeTab, sectionMotion]
+  );
 
   const signIn = async () => {
     if (!roll.trim() || !password) {
@@ -647,6 +788,18 @@ export default function App() {
     ]);
   };
 
+  const openSearchResult = (result) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    if (result.item) {
+      openItem(result.item);
+      return;
+    }
+    if (result.target) {
+      changeSection(result.target);
+    }
+  };
+
   const today = todayRoutine(data.routines);
 
   if (!idToken) {
@@ -706,6 +859,9 @@ export default function App() {
       <StatusBar style="light" />
       <View style={styles.header}>
         <View style={styles.brandRow}>
+          <Pressable onPress={() => setDrawerOpen(true)} style={dynamic.menuButton}>
+            <Text style={[styles.menuIcon, { color: theme.text }]}>☰</Text>
+          </Pressable>
           <BrandMark theme={theme} />
           <View>
             <Text style={[styles.brandSmall, { color: theme.text }]}>Acadex</Text>
@@ -717,6 +873,7 @@ export default function App() {
         </Pressable>
       </View>
 
+      <Animated.View style={[styles.screenTransition, { opacity: sectionMotion, transform: [{ translateY: sectionTranslateY }] }]}>
       {activeTab === "Dashboard" ? (
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.metrics}>
@@ -836,6 +993,26 @@ export default function App() {
             </View>
           ))}
         </ScrollView>
+      ) : activeTab === "Manager" ? (
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={dynamic.card}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Manager Panel</Text>
+            <Text style={[styles.muted, { color: theme.muted }]}>You can update files, routine, and calendar from the Acadex website manager tools.</Text>
+          </View>
+          <View style={styles.metrics}>
+            <Metric label="Subjects" value={data.subjects.length} theme={theme} dynamic={dynamic} />
+            <Metric label="Files" value={data.files.length} theme={theme} dynamic={dynamic} />
+            <Metric label="Classes" value={data.routines.length} theme={theme} dynamic={dynamic} />
+            <Metric label="Events" value={data.exams.length} theme={theme} dynamic={dynamic} />
+          </View>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Manager sections</Text>
+          {["Subject", "Routine", "Calendar"].map((key) => (
+            <Pressable key={key} onPress={() => changeSection(key)} style={dynamic.card}>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>{key}</Text>
+              <Text style={[styles.muted, { color: theme.muted }]}>Open {key.toLowerCase()} workspace</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
       ) : activeTab === "Settings" ? (
         <ScrollView contentContainerStyle={styles.content}>
           <View style={dynamic.card}>
@@ -856,9 +1033,33 @@ export default function App() {
       ) : (
         <FlatList contentContainerStyle={styles.content} data={downloadedItems} keyExtractor={(item) => item.key} renderItem={({ item }) => <FileCard item={item} downloaded isAdmin={profile?.role === "admin"} onOpen={() => openItem(item)} onRemove={() => removeLocal(item)} onDeleteWebsite={() => deleteFromWebsite(item)} theme={theme} dynamic={dynamic} />} />
       )}
+      </Animated.View>
 
+      <AppDrawer
+        open={drawerOpen}
+        activeTab={activeTab}
+        onClose={() => setDrawerOpen(false)}
+        onNavigate={(key) => {
+          setDrawerOpen(false);
+          changeSection(key);
+        }}
+        profile={profile}
+        theme={theme}
+        dynamic={dynamic}
+      />
+      <SearchOverlay
+        open={searchOpen}
+        query={searchQuery}
+        setQuery={setSearchQuery}
+        results={searchResults}
+        onClose={() => setSearchOpen(false)}
+        onOpenResult={openSearchResult}
+        keyboardHeight={keyboardHeight}
+        theme={theme}
+        dynamic={dynamic}
+      />
       {message ? <Text style={dynamic.footerMessage}>{message}</Text> : null}
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} dynamic={dynamic} />
+      <BottomNav activeTab={activeTab} searchOpen={searchOpen} onNavigate={changeSection} theme={theme} dynamic={dynamic} />
     </SafeAreaView>
   );
 }
@@ -871,14 +1072,97 @@ function BrandMark({ theme }) {
   );
 }
 
-function BottomNav({ activeTab, setActiveTab, theme, dynamic }) {
+function AppDrawer({ open, activeTab, onClose, onNavigate, profile, theme, dynamic }) {
+  if (!open) return null;
+  const items = profile?.role === "manager" ? [{ key: "Manager", label: "Manager Panel", icon: "M" }, ...drawerItems] : drawerItems;
+  return (
+    <View style={styles.drawerLayer}>
+      <Pressable style={styles.drawerBackdrop} onPress={onClose} />
+      <View style={dynamic.drawerPanel}>
+        <View style={styles.drawerHeader}>
+          <View>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Acadex menu</Text>
+            <Text style={[styles.muted, { color: theme.muted }]}>More sections</Text>
+          </View>
+          <Pressable onPress={onClose} style={dynamic.closeButton}>
+            <Text style={{ color: theme.text, fontWeight: "900" }}>Close</Text>
+          </Pressable>
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.drawerList}>
+          {items.map((item) => {
+            const active = activeTab === item.key;
+            return (
+              <Pressable key={item.key} onPress={() => onNavigate(item.key)} style={[dynamic.drawerItem, active && dynamic.drawerItemActive]}>
+                <Text style={[styles.bottomNavIcon, { color: active ? "#fff" : theme.accent2 }]}>{item.icon}</Text>
+                <Text style={[styles.drawerLabel, { color: active ? "#fff" : theme.text }]}>{item.label}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+    </View>
+  );
+}
+
+function SearchOverlay({ open, query, setQuery, results, onClose, onOpenResult, keyboardHeight, theme, dynamic }) {
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const timer = setTimeout(() => inputRef.current?.focus?.(), 120);
+    return () => clearTimeout(timer);
+  }, [open]);
+
+  if (!open) return null;
+  return (
+    <View pointerEvents="box-none" style={styles.searchLayer}>
+      <Pressable style={styles.searchBackdrop} onPress={onClose} />
+      <View style={[dynamic.searchPanel, { bottom: Math.max(112, keyboardHeight + 18) }]}>
+        <View style={dynamic.searchInputWrap}>
+          <Text style={[styles.bottomNavIcon, { color: theme.accent2 }]}>Q</Text>
+          <TextInput
+            ref={inputRef}
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search files, teachers, notices..."
+            placeholderTextColor={theme.muted}
+            style={dynamic.searchInput}
+            returnKeyType="search"
+          />
+          {query ? (
+            <Pressable onPress={() => setQuery("")}>
+              <Text style={[styles.clearText, { color: theme.muted }]}>Clear</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        {query.trim() ? (
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={styles.searchResults}>
+            {results.length ? (
+              results.map((result) => (
+                <Pressable key={result.key} onPress={() => onOpenResult(result)} style={dynamic.searchResult}>
+                  <Text style={[styles.searchResultType, { color: theme.accent2 }]}>{result.type}</Text>
+                  <Text style={[styles.cardTitle, { color: theme.text }]} numberOfLines={1}>{result.title}</Text>
+                  <Text style={[styles.muted, { color: theme.muted }]} numberOfLines={1}>{result.subtitle}</Text>
+                </Pressable>
+              ))
+            ) : (
+              <Text style={[styles.muted, { color: theme.muted, padding: 12 }]}>No result found.</Text>
+            )}
+          </ScrollView>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function BottomNav({ activeTab, searchOpen, onNavigate, theme, dynamic }) {
   return (
     <View style={dynamic.bottomNavWrap}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bottomNavContent}>
         {navItems.map((item) => {
-          const active = activeTab === item.key;
+          const active = item.key === "Search" ? searchOpen : activeTab === item.key;
           return (
-            <Pressable key={item.key} onPress={() => setActiveTab(item.key)} style={[dynamic.bottomNavItem, active && dynamic.bottomNavItemActive]}>
+            <Pressable key={item.key} onPress={() => onNavigate(item.key)} style={[dynamic.bottomNavItem, active && dynamic.bottomNavItemActive]}>
               <Text style={[styles.bottomNavIcon, { color: active ? "#fff" : theme.muted }]}>{item.icon}</Text>
               <Text style={[styles.bottomNavLabel, { color: active ? "#fff" : theme.muted }]}>{item.label}</Text>
             </Pressable>
@@ -1032,6 +1316,16 @@ function makeDynamicStyles(theme) {
       paddingVertical: 10,
       paddingHorizontal: 14
     },
+    menuButton: {
+      width: 44,
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 18,
+      backgroundColor: theme.cardStrong,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.16)"
+    },
     tab: {
       borderRadius: 999,
       paddingHorizontal: 16,
@@ -1130,6 +1424,72 @@ function makeDynamicStyles(theme) {
       paddingVertical: 10,
       paddingHorizontal: 14
     },
+    drawerPanel: {
+      position: "absolute",
+      left: 14,
+      top: Platform.OS === "android" ? Math.max(RNStatusBar.currentHeight || 0, 18) + 10 : 24,
+      bottom: 14,
+      width: Math.min(320, Dimensions.get("window").width - 28),
+      borderRadius: 28,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.18)",
+      backgroundColor: theme.cardStrong,
+      padding: 16
+    },
+    drawerItem: {
+      borderRadius: 20,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.12)",
+      paddingHorizontal: 14,
+      paddingVertical: 13,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12
+    },
+    drawerItemActive: {
+      backgroundColor: theme.accent,
+      borderColor: theme.accent
+    },
+    searchPanel: {
+      position: "absolute",
+      left: 14,
+      right: 14,
+      borderRadius: 28,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.2)",
+      backgroundColor: theme.cardStrong,
+      padding: 12,
+      shadowColor: theme.accent,
+      shadowOpacity: 0.28,
+      shadowRadius: 24,
+      elevation: 18
+    },
+    searchInputWrap: {
+      borderRadius: 22,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.16)",
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10
+    },
+    searchInput: {
+      flex: 1,
+      color: theme.text,
+      fontSize: 16,
+      paddingVertical: 8
+    },
+    searchResult: {
+      borderRadius: 20,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.12)",
+      padding: 13,
+      marginBottom: 8
+    },
     textPreview: {
       flex: 1,
       margin: 16,
@@ -1189,6 +1549,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10
   },
+  menuIcon: {
+    fontSize: 22,
+    fontWeight: "900"
+  },
   brandMark: {
     width: 44,
     height: 44,
@@ -1197,6 +1561,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden"
+  },
+  brandMarkImage: {
+    width: "100%",
+    height: "100%"
   },
   brandMarkOrb: {
     position: "absolute",
@@ -1225,6 +1593,9 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 156,
     gap: 12
+  },
+  screenTransition: {
+    flex: 1
   },
   metrics: {
     flexDirection: "row",
@@ -1324,6 +1695,51 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     fontSize: 12,
     fontWeight: "800"
+  },
+  drawerLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 30
+  },
+  drawerBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.36)"
+  },
+  drawerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 14
+  },
+  drawerList: {
+    gap: 10,
+    paddingBottom: 24
+  },
+  drawerLabel: {
+    fontSize: 16,
+    fontWeight: "900"
+  },
+  searchLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 40
+  },
+  searchBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.18)"
+  },
+  searchResults: {
+    maxHeight: 300,
+    marginTop: 10
+  },
+  searchResultType: {
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1.4,
+    textTransform: "uppercase"
+  },
+  clearText: {
+    fontSize: 12,
+    fontWeight: "900"
   },
   calendarGrid: {
     flexDirection: "row",
