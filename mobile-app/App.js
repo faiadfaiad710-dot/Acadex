@@ -1099,6 +1099,10 @@ function AppDrawer({ open, activeTab, onClose, onNavigate, profile, theme, dynam
 
 function SearchOverlay({ open, query, setQuery, results, onClose, onOpenResult, keyboardHeight, theme, dynamic }) {
   const inputRef = useRef(null);
+  const screenHeight = Dimensions.get("window").height;
+  const searchBottom = keyboardHeight ? Math.min(keyboardHeight + 14, screenHeight - 132) : 112;
+  const panelMaxHeight = Math.max(96, screenHeight - searchBottom - 18);
+  const resultsMaxHeight = Math.max(56, panelMaxHeight - 88);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -1110,7 +1114,7 @@ function SearchOverlay({ open, query, setQuery, results, onClose, onOpenResult, 
   return (
     <View pointerEvents="box-none" style={styles.searchLayer}>
       <Pressable style={styles.searchBackdrop} onPress={onClose} />
-      <View style={[dynamic.searchPanel, { bottom: Math.max(112, keyboardHeight + 18) }]}>
+      <View style={[dynamic.searchPanel, { bottom: searchBottom, maxHeight: panelMaxHeight }]}>
         <View style={dynamic.searchInputWrap}>
           <Text style={[styles.bottomNavIcon, { color: theme.accent2 }]}>Q</Text>
           <TextInput
@@ -1129,7 +1133,7 @@ function SearchOverlay({ open, query, setQuery, results, onClose, onOpenResult, 
           ) : null}
         </View>
         {query.trim() ? (
-          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={styles.searchResults}>
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={[styles.searchResults, { maxHeight: resultsMaxHeight }]}>
             {results.length ? (
               results.map((result) => (
                 <Pressable key={result.key} onPress={() => onOpenResult(result)} style={dynamic.searchResult}>

@@ -29,6 +29,7 @@ export function BottomCapsuleNav() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [windowHeight, setWindowHeight] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export function BottomCapsuleNav() {
   useEffect(() => {
     const updateKeyboardOffset = () => {
       const viewport = window.visualViewport;
+      setWindowHeight(window.innerHeight);
       if (!viewport) {
         setKeyboardOffset(0);
         return;
@@ -86,7 +88,9 @@ export function BottomCapsuleNav() {
   }, [query]);
 
   const navBottom = Math.max(16, keyboardOffset + 16);
-  const searchBottom = Math.max(92, keyboardOffset + 92);
+  const searchBottom = Math.max(92, keyboardOffset + 88);
+  const searchPanelMaxHeight = Math.max(180, (windowHeight || 720) - searchBottom - 14);
+  const searchResultsMaxHeight = Math.max(92, searchPanelMaxHeight - 82);
 
   return (
     <>
@@ -108,7 +112,7 @@ export function BottomCapsuleNav() {
               exit={{ opacity: 0, y: 14, scale: 0.96 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
               className="glass-card fixed left-4 right-4 z-[75] rounded-[28px] border border-border/70 p-3 shadow-card lg:hidden"
-              style={{ bottom: searchBottom }}
+              style={{ bottom: searchBottom, maxHeight: searchPanelMaxHeight }}
             >
               <label className="flex items-center gap-3 rounded-2xl border border-border bg-card/85 px-4 py-3">
                 <Search className="size-4 text-subtle" />
@@ -127,7 +131,7 @@ export function BottomCapsuleNav() {
               </label>
 
               {query.trim() ? (
-                <div className="mt-3 max-h-[38dvh] space-y-2 overflow-y-auto pr-1">
+                <div className="mt-3 space-y-2 overflow-y-auto pr-1" style={{ maxHeight: searchResultsMaxHeight }}>
                   {loading ? <p className="rounded-2xl bg-card/70 px-3 py-2 text-sm text-subtle">Searching...</p> : null}
                   {!loading && results.length === 0 ? <p className="rounded-2xl bg-card/70 px-3 py-2 text-sm text-subtle">No result found.</p> : null}
                   {results.map((result) => (
