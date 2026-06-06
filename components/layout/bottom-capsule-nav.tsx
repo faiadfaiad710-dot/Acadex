@@ -100,7 +100,7 @@ export function BottomCapsuleNav() {
             <motion.button
               type="button"
               aria-label="Close search"
-              className="fixed inset-0 z-[68] bg-slate-950/30 lg:hidden"
+              className="fixed inset-0 z-[68] bg-slate-950/60 backdrop-blur-xl lg:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

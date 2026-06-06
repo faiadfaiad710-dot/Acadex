@@ -781,6 +781,27 @@ export default function App() {
     ]);
   };
 
+  const manageRequest = useCallback(
+    async (action, payload) => {
+      if (!idToken) {
+        setMessage("Log in first.");
+        return null;
+      }
+      const body = await fetchJson(`${apiBaseUrl}/api/mobile/manage`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ action, payload })
+      });
+      setMessage(body?.message || "Saved.");
+      await syncNow({ silent: true });
+      return body;
+    },
+    [idToken, syncNow]
+  );
+
   const openSearchResult = (result) => {
     setSearchOpen(false);
     setSearchQuery("");
@@ -987,24 +1008,15 @@ export default function App() {
           ))}
         </ScrollView>
       ) : activeTab === "Manager" ? (
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={dynamic.card}>
-            <Text style={[styles.cardTitle, { color: theme.text }]}>Manager Panel</Text>
-            <Text style={[styles.muted, { color: theme.muted }]}>You can update files, routine, and calendar from the Acadex website manager tools.</Text>
-          </View>
-          <View style={styles.metrics}>
-            <Metric label="Subjects" value={data.subjects.length} theme={theme} dynamic={dynamic} />
-            <Metric label="Files" value={data.files.length} theme={theme} dynamic={dynamic} />
-            <Metric label="Classes" value={data.routines.length} theme={theme} dynamic={dynamic} />
-            <Metric label="Events" value={data.exams.length} theme={theme} dynamic={dynamic} />
-          </View>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Manager sections</Text>
-          {["Subject", "Routine", "Calendar"].map((key) => (
-            <Pressable key={key} onPress={() => changeSection(key)} style={dynamic.card}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>{key}</Text>
-              <Text style={[styles.muted, { color: theme.muted }]}>Open {key.toLowerCase()} workspace</Text>
-            </Pressable>
-          ))}
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ManagerTools
+            profile={profile}
+            data={data}
+            onManage={manageRequest}
+            onNavigate={changeSection}
+            theme={theme}
+            dynamic={dynamic}
+          />
         </ScrollView>
       ) : activeTab === "Settings" ? (
         <ScrollView contentContainerStyle={styles.content}>
@@ -1067,7 +1079,10 @@ function BrandMark({ theme }) {
 
 function AppDrawer({ open, activeTab, onClose, onNavigate, profile, theme, dynamic }) {
   if (!open) return null;
-  const items = profile?.role === "manager" ? [{ key: "Manager", label: "Manager Panel", icon: "M" }, ...drawerItems] : drawerItems;
+  const canManage = profile?.role === "admin" || profile?.role === "manager";
+  const items = canManage
+    ? [{ key: "Manager", label: profile?.role === "admin" ? "Admin Panel" : "Manager Panel", icon: profile?.role === "admin" ? "A" : "M" }, ...drawerItems]
+    : drawerItems;
   return (
     <View style={styles.drawerLayer}>
       <Pressable style={styles.drawerBackdrop} onPress={onClose} />
@@ -1094,6 +1109,254 @@ function AppDrawer({ open, activeTab, onClose, onNavigate, profile, theme, dynam
         </ScrollView>
       </View>
     </View>
+  );
+}
+
+function ChoiceChips({ label, items, selected, onSelect, theme, dynamic }) {
+  return (
+    <View style={styles.choiceBlock}>
+      <Text style={[styles.formLabel, { color: theme.muted }]}>{label}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.choiceRow}>
+        {items.map((item) => {
+          const active = selected === item.value;
+          return (
+            <Pressable key={item.value} onPress={() => onSelect(item.value)} style={[dynamic.choiceChip, active && dynamic.choiceChipActive]}>
+              <Text style={[styles.choiceText, { color: active ? "#fff" : theme.text }]}>{item.label}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+function ManagerTools({ profile, data, onManage, onNavigate, theme, dynamic }) {
+  const isAdmin = profile?.role === "admin";
+  const subjects = data.subjects || [];
+  const teachers = data.teachers || [];
+  const firstSubjectId = subjects[0]?.id || "";
+  const firstTeacherId = teachers[0]?.id || "";
+
+  const [routineSubjectId, setRoutineSubjectId] = useState(firstSubjectId);
+  const [routineDay, setRoutineDay] = useState("saturday");
+  const [routineStart, setRoutineStart] = useState("");
+  const [routineEnd, setRoutineEnd] = useState("");
+  const [routineRoom, setRoutineRoom] = useState("");
+  const [routineTeacherId, setRoutineTeacherId] = useState("");
+  const [routineTeacherName, setRoutineTeacherName] = useState("");
+  const [routineNote, setRoutineNote] = useState("");
+
+  const [calendarKind, setCalendarKind] = useState("exam");
+  const [calendarSubjectId, setCalendarSubjectId] = useState(firstSubjectId);
+  const [calendarTitle, setCalendarTitle] = useState("");
+  const [calendarDate, setCalendarDate] = useState("");
+  const [calendarTime, setCalendarTime] = useState("");
+  const [calendarRoom, setCalendarRoom] = useState("");
+  const [calendarNote, setCalendarNote] = useState("");
+
+  const [newRoll, setNewRoll] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newRole, setNewRole] = useState("user");
+  const [busyAction, setBusyAction] = useState("");
+  const [formMessage, setFormMessage] = useState("");
+
+  useEffect(() => {
+    if (!routineSubjectId && firstSubjectId) setRoutineSubjectId(firstSubjectId);
+    if (!calendarSubjectId && firstSubjectId) setCalendarSubjectId(firstSubjectId);
+    if (!routineTeacherId && firstTeacherId) setRoutineTeacherId("");
+  }, [calendarSubjectId, firstSubjectId, firstTeacherId, routineSubjectId, routineTeacherId]);
+
+  const subjectChoices = subjects.map((subject) => ({
+    value: subject.id,
+    label: subject.code ? `${subject.code} ${subject.name}` : subject.name
+  }));
+  const teacherChoices = [
+    { value: "", label: "No teacher" },
+    ...teachers.map((teacher) => ({ value: teacher.id, label: teacher.name || "Teacher" }))
+  ];
+  const dayChoices = ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"].map((day) => ({
+    value: day,
+    label: day[0].toUpperCase() + day.slice(1)
+  }));
+
+  const runAction = async (name, action, payload, reset) => {
+    setFormMessage("");
+    setBusyAction(name);
+    try {
+      await onManage(action, payload);
+      reset?.();
+      setFormMessage("Saved successfully.");
+    } catch (error) {
+      setFormMessage(error instanceof Error ? error.message : "Save failed.");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
+  const saveRoutine = () => {
+    if (!routineSubjectId || !routineStart) {
+      setFormMessage("Select subject and class start time.");
+      return;
+    }
+    runAction(
+      "routine",
+      "saveRoutine",
+      {
+        subjectId: routineSubjectId,
+        day: routineDay,
+        startTime: routineStart,
+        endTime: routineEnd,
+        room: routineRoom,
+        teacherId: routineTeacherId,
+        teacherName: routineTeacherName,
+        note: routineNote
+      },
+      () => {
+        setRoutineStart("");
+        setRoutineEnd("");
+        setRoutineRoom("");
+        setRoutineTeacherName("");
+        setRoutineNote("");
+      }
+    );
+  };
+
+  const saveCalendar = () => {
+    if (!calendarTitle || !calendarDate || (calendarKind === "exam" && !calendarSubjectId)) {
+      setFormMessage("Add title, date, and subject for exam.");
+      return;
+    }
+    runAction(
+      "calendar",
+      "saveExam",
+      {
+        kind: calendarKind,
+        title: calendarTitle,
+        subjectId: calendarKind === "exam" ? calendarSubjectId : "",
+        examDate: calendarDate,
+        startTime: calendarTime,
+        room: calendarRoom,
+        note: calendarNote
+      },
+      () => {
+        setCalendarTitle("");
+        setCalendarDate("");
+        setCalendarTime("");
+        setCalendarRoom("");
+        setCalendarNote("");
+      }
+    );
+  };
+
+  const createUser = () => {
+    if (!newRoll || newPassword.length < 6) {
+      setFormMessage("Roll number and 6 digit temporary password are required.");
+      return;
+    }
+    runAction(
+      "user",
+      "createUser",
+      { phone: newRoll, password: newPassword, role: newRole },
+      () => {
+        setNewRoll("");
+        setNewPassword("");
+        setNewRole("user");
+      }
+    );
+  };
+
+  return (
+    <>
+      <View style={dynamic.card}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>{isAdmin ? "Admin Panel" : "Manager Panel"}</Text>
+        <Text style={[styles.muted, { color: theme.muted }]}>Add classes, publish exam/event dates, and manage core Acadex work from the app.</Text>
+      </View>
+
+      <View style={styles.metrics}>
+        <Metric label="Subjects" value={subjects.length} theme={theme} dynamic={dynamic} />
+        <Metric label="Files" value={data.files.length} theme={theme} dynamic={dynamic} />
+        <Metric label="Classes" value={data.routines.length} theme={theme} dynamic={dynamic} />
+        <Metric label="Events" value={data.exams.length} theme={theme} dynamic={dynamic} />
+      </View>
+
+      {formMessage ? <Text style={[styles.message, { color: theme.accent2 }]}>{formMessage}</Text> : null}
+
+      <View style={dynamic.card}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>Add class routine</Text>
+        <ChoiceChips label="Subject" items={subjectChoices} selected={routineSubjectId} onSelect={setRoutineSubjectId} theme={theme} dynamic={dynamic} />
+        <ChoiceChips label="Day" items={dayChoices} selected={routineDay} onSelect={setRoutineDay} theme={theme} dynamic={dynamic} />
+        <View style={styles.twoCol}>
+          <TextInput value={routineStart} onChangeText={setRoutineStart} placeholder="Start time 09:00" placeholderTextColor={theme.muted} style={[dynamic.input, styles.flexInput]} />
+          <TextInput value={routineEnd} onChangeText={setRoutineEnd} placeholder="End time" placeholderTextColor={theme.muted} style={[dynamic.input, styles.flexInput]} />
+        </View>
+        <TextInput value={routineRoom} onChangeText={setRoutineRoom} placeholder="Room" placeholderTextColor={theme.muted} style={dynamic.input} />
+        <ChoiceChips label="Teacher" items={teacherChoices} selected={routineTeacherId} onSelect={setRoutineTeacherId} theme={theme} dynamic={dynamic} />
+        <TextInput value={routineTeacherName} onChangeText={setRoutineTeacherName} placeholder="Teacher name if not listed" placeholderTextColor={theme.muted} style={dynamic.input} />
+        <TextInput value={routineNote} onChangeText={setRoutineNote} placeholder="Class note" placeholderTextColor={theme.muted} multiline style={[dynamic.input, styles.multiInput]} />
+        <Pressable onPress={saveRoutine} disabled={busyAction === "routine"} style={[dynamic.primaryButton, busyAction === "routine" && styles.disabled]}>
+          <Text style={styles.primaryButtonText}>{busyAction === "routine" ? "Saving..." : "Add class"}</Text>
+        </Pressable>
+      </View>
+
+      <View style={dynamic.card}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>Add exam or event</Text>
+        <ChoiceChips
+          label="Type"
+          items={[
+            { value: "exam", label: "Exam" },
+            { value: "event", label: "Event" }
+          ]}
+          selected={calendarKind}
+          onSelect={setCalendarKind}
+          theme={theme}
+          dynamic={dynamic}
+        />
+        <TextInput value={calendarTitle} onChangeText={setCalendarTitle} placeholder={calendarKind === "event" ? "Event title" : "Exam title"} placeholderTextColor={theme.muted} style={dynamic.input} />
+        {calendarKind === "exam" ? (
+          <ChoiceChips label="Subject" items={subjectChoices} selected={calendarSubjectId} onSelect={setCalendarSubjectId} theme={theme} dynamic={dynamic} />
+        ) : null}
+        <View style={styles.twoCol}>
+          <TextInput value={calendarDate} onChangeText={setCalendarDate} placeholder="Date YYYY-MM-DD" placeholderTextColor={theme.muted} style={[dynamic.input, styles.flexInput]} />
+          <TextInput value={calendarTime} onChangeText={setCalendarTime} placeholder="Time" placeholderTextColor={theme.muted} style={[dynamic.input, styles.flexInput]} />
+        </View>
+        <TextInput value={calendarRoom} onChangeText={setCalendarRoom} placeholder="Room or hall" placeholderTextColor={theme.muted} style={dynamic.input} />
+        <TextInput value={calendarNote} onChangeText={setCalendarNote} placeholder="Extra note" placeholderTextColor={theme.muted} multiline style={[dynamic.input, styles.multiInput]} />
+        <Pressable onPress={saveCalendar} disabled={busyAction === "calendar"} style={[dynamic.primaryButton, busyAction === "calendar" && styles.disabled]}>
+          <Text style={styles.primaryButtonText}>{busyAction === "calendar" ? "Saving..." : calendarKind === "event" ? "Add event" : "Add exam"}</Text>
+        </Pressable>
+      </View>
+
+      {isAdmin ? (
+        <View style={dynamic.card}>
+          <Text style={[styles.cardTitle, { color: theme.text }]}>Create or update user</Text>
+          <TextInput value={newRoll} onChangeText={setNewRoll} placeholder="Roll number" placeholderTextColor={theme.muted} keyboardType="number-pad" style={dynamic.input} />
+          <TextInput value={newPassword} onChangeText={setNewPassword} placeholder="Temporary password" placeholderTextColor={theme.muted} secureTextEntry style={dynamic.input} />
+          <ChoiceChips
+            label="Role"
+            items={[
+              { value: "user", label: "User" },
+              { value: "manager", label: "Manager" },
+              { value: "admin", label: "Admin" }
+            ]}
+            selected={newRole}
+            onSelect={setNewRole}
+            theme={theme}
+            dynamic={dynamic}
+          />
+          <Pressable onPress={createUser} disabled={busyAction === "user"} style={[dynamic.primaryButton, busyAction === "user" && styles.disabled]}>
+            <Text style={styles.primaryButtonText}>{busyAction === "user" ? "Saving..." : "Save user"}</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Quick open</Text>
+      {["Subject", "Routine", "Calendar"].map((key) => (
+        <Pressable key={key} onPress={() => onNavigate(key)} style={dynamic.card}>
+          <Text style={[styles.cardTitle, { color: theme.text }]}>{key}</Text>
+          <Text style={[styles.muted, { color: theme.muted }]}>Open {key.toLowerCase()} workspace</Text>
+        </Pressable>
+      ))}
+    </>
   );
 }
 
@@ -1487,6 +1750,18 @@ function makeDynamicStyles(theme) {
       padding: 13,
       marginBottom: 8
     },
+    choiceChip: {
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.14)",
+      backgroundColor: theme.card,
+      paddingHorizontal: 13,
+      paddingVertical: 9
+    },
+    choiceChipActive: {
+      backgroundColor: theme.accent,
+      borderColor: theme.accent
+    },
     textPreview: {
       flex: 1,
       margin: 16,
@@ -1699,7 +1974,7 @@ const styles = StyleSheet.create({
   },
   drawerBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.36)"
+    backgroundColor: "rgba(2,6,23,0.78)"
   },
   drawerHeader: {
     flexDirection: "row",
@@ -1722,7 +1997,7 @@ const styles = StyleSheet.create({
   },
   searchBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.18)"
+    backgroundColor: "rgba(2,6,23,0.72)"
   },
   searchResults: {
     maxHeight: 300,
@@ -1737,6 +2012,34 @@ const styles = StyleSheet.create({
   clearText: {
     fontSize: 12,
     fontWeight: "900"
+  },
+  formLabel: {
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase"
+  },
+  choiceBlock: {
+    gap: 8
+  },
+  choiceRow: {
+    gap: 8,
+    paddingRight: 12
+  },
+  choiceText: {
+    fontSize: 12,
+    fontWeight: "900"
+  },
+  twoCol: {
+    flexDirection: "row",
+    gap: 10
+  },
+  flexInput: {
+    flex: 1
+  },
+  multiInput: {
+    minHeight: 92,
+    textAlignVertical: "top"
   },
   calendarGrid: {
     flexDirection: "row",
