@@ -12,7 +12,7 @@ import { MouseAura } from "@/components/layout/mouse-aura";
 import { Notice } from "@/lib/types";
 import { NoticePopup } from "@/components/layout/notice-popup";
 
-function getRouteTitle(pathname: string, role: UserRole) {
+function getRouteTitle(pathname: string, role: UserRole | string) {
   if (pathname.startsWith("/admin")) {
     return { title: "Admin Panel", subtitle: "Manage users, analytics, and academic resources." };
   }
@@ -70,7 +70,7 @@ export function AppShell({
   unseenNotices,
   children
 }: {
-  role: UserRole;
+  role: UserRole | string;
   unreadNotificationCount: number;
   unseenNotices: Notice[];
   children: React.ReactNode;

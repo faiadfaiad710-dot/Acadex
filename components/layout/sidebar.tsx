@@ -32,20 +32,26 @@ const navItems: Array<{
   { href: "/profile", labelKey: "profile", label: "Profile", icon: UserRoundCog, roles: ["admin", "manager", "user"] }
 ];
 
+function normalizeRole(role: UserRole | string | undefined): UserRole {
+  if (role === "admin" || role === "manager") return role;
+  return "user";
+}
+
 export function Sidebar({
   role,
   className,
   onNavigate,
   onClose
 }: {
-  role: UserRole;
+  role: UserRole | string;
   className?: string;
   onNavigate?: () => void;
   onClose?: () => void;
 }) {
   const pathname = usePathname();
   const { dictionary } = useAppConfig();
-  const visibleItems = navItems.filter((item) => item.roles.includes(role));
+  const safeRole = normalizeRole(role);
+  const visibleItems = navItems.filter((item) => item.roles.includes(safeRole));
 
   return (
     <aside className={cn("glass-card sidebar-glass flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain rounded-[32px] border border-border/70 p-5 shadow-card touch-pan-y [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden", className)}>
@@ -53,7 +59,7 @@ export function Sidebar({
         <div>
           <p className="brand-gradient font-heading text-4xl font-black tracking-tight">Acadex</p>
           <p className="mt-2 text-sm text-subtle">
-            {role === "admin" ? "Administrator workspace" : role === "manager" ? "Manager workspace" : "Student workspace"}
+            {safeRole === "admin" ? "Administrator workspace" : safeRole === "manager" ? "Manager workspace" : "Student workspace"}
           </p>
         </div>
         {onClose ? (
