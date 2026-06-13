@@ -1,6 +1,7 @@
 import {
   ActivityLog,
   AdminReadingInsight,
+  AiUsageLog,
   ClassRoutine,
   DashboardStats,
   ExamEvent,
@@ -376,4 +377,15 @@ export async function getLatestUnseenNotices(lastSeenAt?: string, limit = 3) {
   const cutoff = toMs(lastSeenAt);
   const notices = await getAllNotices();
   return notices.filter((notice) => !cutoff || toMs(notice.date) > cutoff).slice(0, limit);
+}
+
+export async function getRecentAiUsageLogs(limit = 8) {
+  const adminDb = getAdminDb();
+  try {
+    const snapshot = await adminDb.collection("aiUsageLogs").orderBy("createdAt", "desc").limit(limit).get();
+    return snapshot.docs.map((doc) => normalize<AiUsageLog>(doc.id, doc.data()));
+  } catch (error) {
+    console.error("Failed to load AI usage logs", error);
+    return [];
+  }
 }

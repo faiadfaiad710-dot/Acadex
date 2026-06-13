@@ -28,6 +28,8 @@ export default async function ViewerPage({
         contentType={data.fileType || data.format}
         directSrc={(noticeDoc.data() as { fileUrl?: string }).fileUrl}
         downloadSrc={`/api/notices/download?id=${encodeURIComponent(id)}`}
+        sourceType="notice"
+        sourceId={id}
       />
     );
   }
@@ -46,6 +48,8 @@ export default async function ViewerPage({
         contentType={data.fileType || data.format}
         directSrc={data.fileUrl}
         downloadSrc={`/api/subject-resources/download?id=${encodeURIComponent(id)}`}
+        sourceType="resource"
+        sourceId={id}
       />
     );
   }
@@ -64,6 +68,8 @@ export default async function ViewerPage({
       contentType={data.fileType || data.format}
       directSrc={data.fileUrl}
       downloadSrc={`/api/files/download?id=${encodeURIComponent(id)}`}
+      sourceType="file"
+      sourceId={id}
     />
   );
 }

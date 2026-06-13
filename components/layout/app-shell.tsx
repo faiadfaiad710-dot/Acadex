@@ -25,6 +25,9 @@ function getRouteTitle(pathname: string, role: UserRole) {
   if (pathname.startsWith("/search")) {
     return { title: "Search", subtitle: "Find files, subjects, teachers, labs, notices, and updates." };
   }
+  if (pathname.startsWith("/ai")) {
+    return { title: "AI Assistant", subtitle: "Ask Acadex to find, explain, and analyze academic resources." };
+  }
   if (pathname.startsWith("/subjects")) {
     return { title: "Subjects", subtitle: "Browse and manage academic subjects." };
   }
@@ -45,6 +48,9 @@ function getRouteTitle(pathname: string, role: UserRole) {
   }
   if (pathname.startsWith("/labs")) {
     return { title: "Labs", subtitle: "Browse lab documents and resources." };
+  }
+  if (pathname.startsWith("/tutorial")) {
+    return { title: "Tutorial", subtitle: "Learn how to use every Acadex feature." };
   }
   if (pathname.startsWith("/profile")) {
     return { title: "Profile", subtitle: "Update your password and account settings." };

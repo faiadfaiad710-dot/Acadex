@@ -3,12 +3,17 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { Panel } from "@/components/ui/panel";
 import { createUserAction, deleteUserAction } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/guards";
-import { getAdminReadingInsight, getAdminStats, getAllUsers } from "@/lib/data";
+import { getAdminReadingInsight, getAdminStats, getAllUsers, getRecentAiUsageLogs } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
 export default async function AdminPage() {
   const currentAdmin = await requireAdmin();
-  const [stats, users, readingInsight] = await Promise.all([getAdminStats(), getAllUsers(), getAdminReadingInsight()]);
+  const [stats, users, readingInsight, aiUsageLogs] = await Promise.all([
+    getAdminStats(),
+    getAllUsers(),
+    getAdminReadingInsight(),
+    getRecentAiUsageLogs()
+  ]);
 
   return (
     <div className="space-y-5">
@@ -99,6 +104,30 @@ export default async function AdminPage() {
           </div>
         </Panel>
       </div>
+
+      <Panel>
+        <h3 className="font-heading text-lg font-semibold text-text">Recent AI usage</h3>
+        <p className="mt-2 text-sm text-subtle">Chats and file analyses are logged here for admin visibility.</p>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {aiUsageLogs.length ? (
+            aiUsageLogs.map((log) => (
+              <div key={log.id} className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium text-text">{log.userLabel || log.uid}</p>
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-subtle">{log.action}</span>
+                </div>
+                <p className="mt-2 line-clamp-2 text-sm text-subtle">{log.prompt || log.sourceId || "AI request"}</p>
+                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-subtle">
+                  <span>{log.resultCount || 0} result(s)</span>
+                  <span>{formatDate(log.createdAt)}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-2xl border border-border bg-card p-4 text-sm text-subtle">No AI usage yet.</p>
+          )}
+        </div>
+      </Panel>
     </div>
   );
 }

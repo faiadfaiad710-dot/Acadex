@@ -8,6 +8,7 @@ import { SURFACE_MODES, THEMES } from "@/lib/constants";
 import { SurfaceMode, ThemeName } from "@/lib/types";
 import { useAppConfig } from "@/providers/app-providers";
 import { cn } from "@/lib/utils";
+import { OpenAIKeyCard } from "@/components/settings/openai-key-card";
 
 export default function SettingsPage() {
   const { surfaceMode, setSurfaceMode, theme, setTheme } = useAppConfig();
@@ -19,6 +20,7 @@ export default function SettingsPage() {
       transition={{ duration: 0.18 }}
       className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr]"
     >
+      <div className="space-y-5">
       <GlassCard className="p-5">
         <div className="flex items-center gap-3">
           <span className="rounded-2xl bg-white/10 p-3 text-text">
@@ -36,6 +38,8 @@ export default function SettingsPage() {
           Open profile
         </Link>
       </GlassCard>
+      <OpenAIKeyCard />
+      </div>
 
       <GlassCard className="p-5">
         <div className="flex items-center gap-3">

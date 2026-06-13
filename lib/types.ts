@@ -23,6 +23,8 @@ export interface UserProfile {
   mustChangePassword?: boolean;
   createdAt?: string;
   lastSeenAt?: string;
+  openAiApiKey?: string;
+  openAiKeyUpdatedAt?: string;
 }
 
 export interface Semester {
@@ -178,4 +180,32 @@ export interface AdminReadingInsight {
     lastSubjectName: string;
     lastEnteredAt: string;
   }>;
+}
+
+export type AiSourceType = "file" | "resource" | "notice" | "lab" | "teacher" | "subject";
+export type AiUsageAction = "chat" | "analysis" | "search";
+
+export interface AiSearchResult {
+  id: string;
+  sourceType: AiSourceType;
+  title: string;
+  subject?: string;
+  teacher?: string;
+  fileType?: string;
+  openHref?: string;
+  downloadHref?: string;
+  relevance: number;
+}
+
+export interface AiUsageLog {
+  id: string;
+  uid: string;
+  userLabel: string;
+  action: AiUsageAction;
+  prompt?: string;
+  sourceId?: string;
+  sourceType?: AiSourceType;
+  resultCount?: number;
+  model?: string;
+  createdAt: string;
 }

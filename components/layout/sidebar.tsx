@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarDays, FlaskConical, LayoutDashboard, Megaphone, Search, Settings, ShieldCheck, Table2, Upload, Users2, UserRoundCog, X } from "lucide-react";
+import { BookOpen, Bot, CalendarDays, CircleHelp, FlaskConical, LayoutDashboard, Megaphone, Search, Settings, ShieldCheck, Table2, Upload, Users2, UserRoundCog, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/lib/types";
 import { useAppConfig } from "@/providers/app-providers";
@@ -17,6 +17,7 @@ const navItems: Array<{
 }> = [
   { href: "/dashboard", labelKey: "dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["user", "manager", "admin"] },
   { href: "/search", label: "Search", icon: Search, roles: ["user", "manager", "admin"] },
+  { href: "/ai", label: "AI Assistant", icon: Bot, roles: ["user", "manager", "admin"] },
   { href: "/settings", label: "Settings", icon: Settings, roles: ["admin", "manager", "user"] },
   { href: "/admin", labelKey: "adminPanel", label: "Admin Panel", icon: ShieldCheck, roles: ["admin"] },
   { href: "/manager", label: "Manager Panel", icon: ShieldCheck, roles: ["manager"] },
@@ -27,6 +28,7 @@ const navItems: Array<{
   { href: "/notices", labelKey: "notices", label: "Notices", icon: Megaphone, roles: ["admin", "manager", "user"] },
   { href: "/teachers", labelKey: "teachers", label: "Teachers", icon: Users2, roles: ["admin", "manager", "user"] },
   { href: "/labs", labelKey: "labs", label: "Labs", icon: FlaskConical, roles: ["admin", "manager", "user"] },
+  { href: "/tutorial", label: "Tutorial", icon: CircleHelp, roles: ["admin", "manager", "user"] },
   { href: "/profile", labelKey: "profile", label: "Profile", icon: UserRoundCog, roles: ["admin", "manager", "user"] }
 ];
 

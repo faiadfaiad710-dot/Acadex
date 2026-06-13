@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { AnalyzeWithAI } from "@/components/ai/analyze-with-ai";
+import { AiSourceType } from "@/lib/types";
 
 function guessPreviewKind(contentType?: string, title?: string) {
   const type = (contentType || "").toLowerCase();
@@ -43,13 +45,17 @@ export function DocumentViewer({
   title,
   contentType,
   directSrc,
-  downloadSrc
+  downloadSrc,
+  sourceType,
+  sourceId
 }: {
   src: string;
   title: string;
   contentType?: string;
   directSrc?: string;
   downloadSrc?: string;
+  sourceType?: AiSourceType;
+  sourceId?: string;
 }) {
   const router = useRouter();
   const previewKind = guessPreviewKind(contentType, title);
@@ -78,6 +84,8 @@ export function DocumentViewer({
           Close
         </button>
       </div>
+
+      <AnalyzeWithAI sourceType={sourceType} sourceId={sourceId} title={title} />
 
       <div className="overflow-hidden rounded-[28px] border border-border bg-card">
         {previewKind === "image" ? (
